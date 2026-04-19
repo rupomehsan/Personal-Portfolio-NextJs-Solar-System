@@ -66,3 +66,12 @@
 html {
   scroll-behavior: smooth;
 }
+
+@keyframes dash-flow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -20; }
+}
+.animate-line-flow {
+  stroke-dasharray: 1 2;
+  animation: dash-flow 3s linear infinite;
+}

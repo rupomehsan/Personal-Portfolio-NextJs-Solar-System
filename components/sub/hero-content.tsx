@@ -301,35 +301,35 @@ export const HeroContent = () => {
                 <g filter="url(#neon-glow-r1)">
 {/* 11. Ring 1 Top: MySQL */}
                 <g className="animate-[pulse_4.2s_ease-in-out_infinite_0.1s]">
-                  <path d="M 50 50 L 48 48 L 48 20 L 50 20" fill="none" stroke="#22d3ee" strokeWidth="0.2" />
+                  <path d="M 50 50 L 48 48 L 48 20 L 50 20" fill="none" stroke="#22d3ee" strokeWidth="0.2" className="animate-line-flow" />
                   <circle cx="48" cy="20" r="0.4" fill="#22d3ee" />
                 </g>
 
                 
 {/* 12. Ring 1 Top Right: PostgreSQL */}
                 <g className="animate-[pulse_3.2s_ease-in-out_infinite_0.6s]">
-                  <path d="M 50 50 L 60 40 L 78.5 40 L 78.5 41" fill="none" stroke="#60a5fa" strokeWidth="0.2" />
+                  <path d="M 50 50 L 60 40 L 78.5 40 L 78.5 41" fill="none" stroke="#60a5fa" strokeWidth="0.2" className="animate-line-flow" />
                   <circle cx="60" cy="40" r="0.4" fill="#60a5fa" />
                 </g>
 
                 
 {/* 13. Ring 1 Bottom Right: MongoDB */}
                 <g className="animate-[pulse_5.2s_ease-in-out_infinite_1.1s]">
-                  <path d="M 50 50 L 60 60 L 67.6 67.6 L 67.6 74" fill="none" stroke="#4ade80" strokeWidth="0.2" />
+                  <path d="M 50 50 L 60 60 L 67.6 67.6 L 67.6 74" fill="none" stroke="#4ade80" strokeWidth="0.2" className="animate-line-flow" />
                   <path d="M 67.6 73 L 68.6 74 L 67.6 75 Z" fill="#4ade80" />
                 </g>
 
                 
 {/* 14. Ring 1 Bottom Left: Redis */}
                 <g className="animate-[pulse_4.6s_ease-in-out_infinite_0.3s]">
-                  <path d="M 50 50 L 40 60 L 32.4 67.6 L 32.4 74" fill="none" stroke="#f87171" strokeWidth="0.2" />
+                  <path d="M 50 50 L 40 60 L 32.4 67.6 L 32.4 74" fill="none" stroke="#f87171" strokeWidth="0.2" className="animate-line-flow" />
                   <path d="M 32.4 73 L 31.4 74 L 32.4 75 Z" fill="#f87171" />
                 </g>
 
                 
 {/* 15. Ring 1 Top Left: Firebase */}
                 <g className="animate-[pulse_3.8s_ease-in-out_infinite_0.7s]">
-                  <path d="M 50 50 L 40 40 L 21.5 40 L 21.5 41" fill="none" stroke="#fbbf24" strokeWidth="0.2" />
+                  <path d="M 50 50 L 40 40 L 21.5 40 L 21.5 41" fill="none" stroke="#fbbf24" strokeWidth="0.2" className="animate-line-flow" />
                   <circle cx="40" cy="40" r="0.4" fill="#fbbf24" />
                 </g>
 
@@ -394,7 +394,7 @@ export const HeroContent = () => {
                 <g filter="url(#neon-glow-r2)">
 {/* 16. Ring 2 Top Right: React */}
                 <g className="animate-[pulse_4.8s_ease-in-out_infinite_1.3s]">
-                  <path d="M 50 50 L 65 35 L 65 17.6 L 73.5 17.6" fill="none" stroke="#38bdf8" strokeWidth="0.2" strokeDasharray="1 1" />
+                  <path d="M 50 50 L 65 35 L 65 17.6 L 73.5 17.6" fill="none" stroke="#38bdf8" strokeWidth="0.2" className="animate-line-flow" />
                   <circle cx="65" cy="35" r="0.4" fill="#38bdf8" />
                   <circle cx="65" cy="17.6" r="0.4" fill="#38bdf8" />
                 </g>
@@ -402,7 +402,7 @@ export const HeroContent = () => {
                 
 {/* 17. Ring 2 Bottom Right: Vue */}
                 <g className="animate-[pulse_3.6s_ease-in-out_infinite_0.4s]">
-                  <path d="M 50 50 L 65 65 L 88 65 L 88 62.3" fill="none" stroke="#34d399" strokeWidth="0.2" strokeDasharray="1 1" />
+                  <path d="M 50 50 L 65 65 L 88 65 L 88 62.3" fill="none" stroke="#34d399" strokeWidth="0.2" className="animate-line-flow" />
                   <circle cx="65" cy="65" r="0.4" fill="#34d399" />
                   <rect x="87" y="61.3" width="2" height="2" fill="none" stroke="#34d399" strokeWidth="0.3" />
                 </g>
@@ -410,14 +410,14 @@ export const HeroContent = () => {
                 
 {/* 18. Ring 2 Bottom: Angular */}
                 <g className="animate-[pulse_5.8s_ease-in-out_infinite_0.9s]">
-                  <path d="M 50 50 L 52 52 L 52 90 L 50 90" fill="none" stroke="#fb7185" strokeWidth="0.2" strokeDasharray="1 1" />
+                  <path d="M 50 50 L 52 52 L 52 90 L 50 90" fill="none" stroke="#fb7185" strokeWidth="0.2" className="animate-line-flow" />
                   <rect x="49" y="89" width="2" height="2" fill="none" stroke="#fb7185" strokeWidth="0.3" />
                 </g>
 
                 
 {/* 19. Ring 2 Bottom Left: Tailwind */}
                 <g className="animate-[pulse_4.4s_ease-in-out_infinite_1.4s]">
-                  <path d="M 50 50 L 35 65 L 12 65 L 12 62.3" fill="none" stroke="#38bdf8" strokeWidth="0.2" strokeDasharray="1 1" />
+                  <path d="M 50 50 L 35 65 L 12 65 L 12 62.3" fill="none" stroke="#38bdf8" strokeWidth="0.2" className="animate-line-flow" />
                   <circle cx="35" cy="65" r="0.4" fill="#38bdf8" />
                   <rect x="11" y="61.3" width="2" height="2" fill="none" stroke="#38bdf8" strokeWidth="0.3" />
                 </g>
@@ -425,7 +425,7 @@ export const HeroContent = () => {
                 
 {/* 20. Ring 2 Top Left: Next.js */}
                 <g className="animate-[pulse_3.4s_ease-in-out_infinite_0.5s]">
-                  <path d="M 50 50 L 35 35 L 35 17.6 L 26.5 17.6" fill="none" stroke="#a1a1aa" strokeWidth="0.2" strokeDasharray="1 1" />
+                  <path d="M 50 50 L 35 35 L 35 17.6 L 26.5 17.6" fill="none" stroke="#a1a1aa" strokeWidth="0.2" className="animate-line-flow" />
                   <circle cx="35" cy="35" r="0.4" fill="#a1a1aa" />
                   <circle cx="35" cy="17.6" r="0.4" fill="#a1a1aa" />
                 </g>
@@ -490,8 +490,8 @@ export const HeroContent = () => {
                 <g filter="url(#neon-glow-r3)">
 {/* 1. Ring 3 Top: PHP */}
                 <g className="animate-[pulse_4s_ease-in-out_infinite]">
-                  <path d="M 50 50 L 45 45 L 45 15 L 50 10 L 50 5" fill="none" stroke="#818cf8" strokeWidth="0.2" strokeDasharray="2 1" />
-                  <path d="M 50 50 L 45 45 L 45 15" fill="none" stroke="#818cf8" strokeWidth="0.4" />
+                  <path d="M 50 50 L 45 45 L 45 15 L 50 10 L 50 5" fill="none" stroke="#818cf8" strokeWidth="0.2" className="animate-line-flow" />
+                  <path d="M 50 50 L 45 45 L 45 15" fill="none" className="animate-line-flow" stroke="#818cf8" strokeWidth="0.4" />
                   <circle cx="45" cy="45" r="0.8" fill="#818cf8" />
                   <circle cx="50" cy="5" r="1.5" fill="none" stroke="#818cf8" strokeWidth="0.4" />
                   <circle cx="50" cy="5" r="0.5" fill="#818cf8" />
@@ -500,7 +500,7 @@ export const HeroContent = () => {
                 
 {/* 2. Ring 3 Top Right: JavaScript */}
                 <g className="animate-[pulse_3s_ease-in-out_infinite_0.5s]">
-                  <path d="M 50 50 L 65 50 L 80.5 34.5 L 94 34.5" fill="none" stroke="#facc15" strokeWidth="0.3" />
+                  <path d="M 50 50 L 65 50 L 80.5 34.5 L 94 34.5" fill="none" stroke="#facc15" strokeWidth="0.3" className="animate-line-flow" />
                   <circle cx="65" cy="50" r="0.6" fill="#facc15" />
                   <circle cx="80.5" cy="34.5" r="0.6" fill="#facc15" />
                   <rect x="93" y="33.5" width="2" height="2" fill="none" stroke="#facc15" strokeWidth="0.5" />
@@ -509,7 +509,7 @@ export const HeroContent = () => {
                 
 {/* 3. Ring 3 Bottom Right: Node.js */}
                 <g className="animate-[pulse_5s_ease-in-out_infinite_1s]">
-                  <path d="M 50 50 L 50 65 L 75.4 90.4 L 76 90.4" fill="none" stroke="#4ade80" strokeWidth="0.3" />
+                  <path d="M 50 50 L 50 65 L 75.4 90.4 L 76 90.4" fill="none" stroke="#4ade80" strokeWidth="0.3" className="animate-line-flow" />
                   <circle cx="50" cy="65" r="0.6" fill="#4ade80" />
                   <circle cx="75.4" cy="90.4" r="0.6" fill="#4ade80" />
                   <path d="M 76 89.4 L 77 90.4 L 76 91.4 Z" fill="#4ade80" />
@@ -518,7 +518,7 @@ export const HeroContent = () => {
                 
 {/* 4. Ring 3 Bottom Left: Laravel */}
                 <g className="animate-[pulse_4s_ease-in-out_infinite_0.2s]">
-                  <path d="M 50 50 L 50 65 L 24.6 90.4 L 24 90.4" fill="none" stroke="#f87171" strokeWidth="0.3" />
+                  <path d="M 50 50 L 50 65 L 24.6 90.4 L 24 90.4" fill="none" stroke="#f87171" strokeWidth="0.3" className="animate-line-flow" />
                   <circle cx="50" cy="65" r="0.6" fill="#f87171" />
                   <circle cx="24.6" cy="90.4" r="0.6" fill="#f87171" />
                   <path d="M 24 89.4 L 23 90.4 L 24 91.4 Z" fill="#f87171" />
@@ -527,7 +527,7 @@ export const HeroContent = () => {
                 
 {/* 5. Ring 3 Top Left: Kotlin */}
                 <g className="animate-[pulse_3s_ease-in-out_infinite_0.8s]">
-                  <path d="M 50 50 L 35 50 L 19.5 34.5 L 6 34.5" fill="none" stroke="#c084fc" strokeWidth="0.3" strokeDasharray="2 1" />
+                  <path d="M 50 50 L 35 50 L 19.5 34.5 L 6 34.5" fill="none" stroke="#c084fc" strokeWidth="0.3" className="animate-line-flow" />
                   <circle cx="35" cy="50" r="0.6" fill="#c084fc" />
                   <rect x="5" y="33.5" width="2" height="2" fill="#c084fc" />
                 </g>
@@ -593,7 +593,7 @@ export const HeroContent = () => {
                 <g filter="url(#neon-glow-r4)">
 {/* 6. Ring 4 Top Right: C */}
                 <g className="animate-[pulse_5s_ease-in-out_infinite_1.5s]">
-                  <path d="M 50 50 L 60 40 L 60 25 L 83.6 1.4" fill="none" stroke="#60a5fa" strokeWidth="0.25" />
+                  <path d="M 50 50 L 60 40 L 60 25 L 83.6 1.4" fill="none" stroke="#60a5fa" strokeWidth="0.25" className="animate-line-flow" />
                   <circle cx="60" cy="40" r="0.6" fill="#60a5fa" />
                   <circle cx="60" cy="25" r="0.6" fill="#60a5fa" />
                   <circle cx="83.6" cy="1.4" r="1.2" fill="none" stroke="#60a5fa" strokeWidth="0.5" />
@@ -603,7 +603,7 @@ export const HeroContent = () => {
                 
 {/* 7. Ring 4 Bottom Right: C++ */}
                 <g className="animate-[pulse_4s_ease-in-out_infinite_0.6s]">
-                  <path d="M 50 50 L 75 50 L 93.5 68.5 L 102 68.5" fill="none" stroke="#3b82f6" strokeWidth="0.3" />
+                  <path d="M 50 50 L 75 50 L 93.5 68.5 L 102 68.5" fill="none" stroke="#3b82f6" strokeWidth="0.3" className="animate-line-flow" />
                   <circle cx="75" cy="50" r="0.8" fill="none" stroke="#3b82f6" strokeWidth="0.3" />
                   <circle cx="93.5" cy="68.5" r="0.6" fill="#3b82f6" />
                   <polygon points="102,67.5 104,68.5 102,69.5" fill="#3b82f6" />
@@ -612,8 +612,8 @@ export const HeroContent = () => {
                 
 {/* 8. Ring 4 Bottom: C# */}
                 <g className="animate-[pulse_4.5s_ease-in-out_infinite_0.4s]">
-                  <path d="M 50 50 L 55 55 L 55 85 L 50 90 L 50 105" fill="none" stroke="#a855f7" strokeWidth="0.3" strokeDasharray="3 2" />
-                  <path d="M 50 50 L 55 55 L 55 85" fill="none" stroke="#a855f7" strokeWidth="0.5" />
+                  <path d="M 50 50 L 55 55 L 55 85 L 50 90 L 50 105" fill="none" stroke="#a855f7" strokeWidth="0.3" className="animate-line-flow" />
+                  <path d="M 50 50 L 55 55 L 55 85" fill="none" className="animate-line-flow" stroke="#a855f7" strokeWidth="0.5" />
                   <circle cx="55" cy="55" r="0.6" fill="#a855f7" />
                   <circle cx="50" cy="105" r="1.5" fill="none" stroke="#a855f7" strokeWidth="0.5" />
                   <circle cx="50" cy="105" r="0.5" fill="#a855f7" />
@@ -622,7 +622,7 @@ export const HeroContent = () => {
                 
 {/* 9. Ring 4 Bottom Left: Python */}
                 <g className="animate-[pulse_3.5s_ease-in-out_infinite_1.2s]">
-                  <path d="M 50 50 L 25 50 L 6.5 68.5 L -2 68.5" fill="none" stroke="#eab308" strokeWidth="0.3" />
+                  <path d="M 50 50 L 25 50 L 6.5 68.5 L -2 68.5" fill="none" stroke="#eab308" strokeWidth="0.3" className="animate-line-flow" />
                   <circle cx="25" cy="50" r="0.8" fill="none" stroke="#eab308" strokeWidth="0.3" />
                   <circle cx="6.5" cy="68.5" r="0.6" fill="#eab308" />
                   <polygon points="-2,67.5 -4,68.5 -2,69.5" fill="#eab308" />
@@ -631,7 +631,7 @@ export const HeroContent = () => {
                 
 {/* 10. Ring 4 Top Left: Java */}
                 <g className="animate-[pulse_5.5s_ease-in-out_infinite_0.9s]">
-                  <path d="M 50 50 L 40 40 L 40 25 L 16.4 1.4" fill="none" stroke="#f97316" strokeWidth="0.25" />
+                  <path d="M 50 50 L 40 40 L 40 25 L 16.4 1.4" fill="none" stroke="#f97316" strokeWidth="0.25" className="animate-line-flow" />
                   <circle cx="40" cy="40" r="0.6" fill="#f97316" />
                   <circle cx="40" cy="25" r="0.6" fill="#f97316" />
                   <circle cx="16.4" cy="1.4" r="1.2" fill="none" stroke="#f97316" strokeWidth="0.5" />
