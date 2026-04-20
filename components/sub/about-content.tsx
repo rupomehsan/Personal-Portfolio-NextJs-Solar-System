@@ -1,177 +1,563 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { slideInFromLeft, slideInFromTop } from "@/lib/motion";
+import { useEffect, useState } from "react";
+
+// Custom hook for a true "coder typing" effect
+const TypewriterText = ({
+  text,
+  delay = 0,
+  speed = 10,
+}: {
+  text: string;
+  delay?: number;
+  speed?: number;
+}) => {
+  const [displayText, setDisplayText] = useState("");
+  const [hasStarted, setHasStarted] = useState(false);
+
+  useEffect(() => {
+    const startTimer = setTimeout(() => {
+      setHasStarted(true);
+    }, delay);
+    return () => clearTimeout(startTimer);
+  }, [delay]);
+
+  useEffect(() => {
+    if (!hasStarted) return;
+
+    let i = 0;
+    const typingInterval = setInterval(() => {
+      if (i < text.length) {
+        setDisplayText((prev) => prev + text.charAt(i));
+        i++;
+      } else {
+        clearInterval(typingInterval);
+      }
+    }, speed);
+
+    return () => clearInterval(typingInterval);
+  }, [text, hasStarted, speed]);
+
+  return (
+    <>
+      <span dangerouslySetInnerHTML={{ __html: displayText }} />
+      {hasStarted && (
+        <span className="inline-block w-2.5 h-4 ml-1 bg-cyan-400 animate-pulse align-middle"></span>
+      )}
+    </>
+  );
+};
 
 export const AboutContent = () => {
+  const [mounted, setMounted] = useState(false);
+  const [consoleReady, setConsoleReady] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const timer = setTimeout(() => setConsoleReady(true), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true }}
-      className="flex flex-col items-center justify-center px-6 md:px-14 lg:px-20 w-full z-[20] gap-10 mt-10"
-    >
-      <motion.div 
-        className="h-full w-full max-w-[700px] flex flex-col gap-6 justify-center m-auto text-start"
+    <div className="relative w-full max-w-[1400px] mx-auto min-h-[900px] lg:min-h-[800px] flex items-center justify-center font-mono overflow-hidden py-10 px-4 md:px-10 z-20">
+      {/* --- HUD FRAME BORDERS --- */}
+      <div className="absolute inset-4 pointer-events-none hidden md:block">
+        {/* Top Left Bracket */}
+        <svg
+          width="80"
+          height="80"
+          className="absolute top-0 left-0 opacity-60"
+        >
+          <path
+            d="M 80 2 L 20 2 L 2 20 L 2 80"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="2"
+          />
+          <path
+            d="M 80 8 L 25 8 L 8 25 L 8 80"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="1"
+            strokeOpacity="0.5"
+          />
+        </svg>
+        {/* Top Right Bracket */}
+        <svg
+          width="80"
+          height="80"
+          className="absolute top-0 right-0 opacity-60"
+        >
+          <path
+            d="M 0 2 L 60 2 L 78 20 L 78 80"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="2"
+          />
+          <path
+            d="M 0 8 L 55 8 L 72 25 L 72 80"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="1"
+            strokeOpacity="0.5"
+          />
+        </svg>
+        {/* Bottom Left Bracket */}
+        <svg
+          width="80"
+          height="80"
+          className="absolute bottom-0 left-0 opacity-60"
+        >
+          <path
+            d="M 80 78 L 20 78 L 2 60 L 2 0"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="2"
+          />
+          <path
+            d="M 80 72 L 25 72 L 8 55 L 8 0"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="1"
+            strokeOpacity="0.5"
+          />
+        </svg>
+        {/* Bottom Right Bracket */}
+        <svg
+          width="80"
+          height="80"
+          className="absolute bottom-0 right-0 opacity-60"
+        >
+          <path
+            d="M 0 78 L 60 78 L 78 60 L 78 0"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="2"
+          />
+          <path
+            d="M 0 72 L 55 72 L 72 55 L 72 0"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="1"
+            strokeOpacity="0.5"
+          />
+        </svg>
+
+        {/* Connecting Lines */}
+        <div className="absolute top-[1px] left-[80px] right-[80px] h-[1px] bg-cyan-500/20"></div>
+        <div className="absolute bottom-[1px] left-[80px] right-[80px] h-[1px] bg-cyan-500/20"></div>
+        <div className="absolute left-[1px] top-[80px] bottom-[80px] w-[1px] bg-cyan-500/20"></div>
+        <div className="absolute right-[1px] top-[80px] bottom-[80px] w-[1px] bg-cyan-500/20"></div>
+      </div>
+
+      {/* --- BACKGROUND GLOW & PARTICLES --- */}
+      <div className="absolute inset-0 bg-[url('/bg-hud.png')] bg-cover bg-center opacity-10 pointer-events-none mix-blend-screen" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+      {/* --- HUD ELEMENTS --- */}
+
+      {/* 1. DATA SCANNING GRID (Top-Left) */}
+      <div className="absolute top-8 left-8 lg:top-[12%] lg:left-[8%] w-48 h-32 border border-cyan-500/30 bg-[#020617]/50 backdrop-blur-sm p-3 hidden xl:flex flex-col z-10 overflow-hidden shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+        {/* Animated scanning line */}
+        <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400/80 shadow-[0_0_10px_rgba(34,211,238,1)] animate-[scan_3s_linear_infinite]"></div>
+
+        {/* Grid Background */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(6, 182, 212, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.1) 1px, transparent 1px)",
+            backgroundSize: "12px 12px",
+          }}
+        ></div>
+
+        <div className="relative z-10">
+          <p className="text-cyan-400 text-[10px] font-bold mb-1 tracking-widest uppercase">
+            COORD
+          </p>
+          <div className="text-cyan-200/60 text-[8px] leading-relaxed font-mono">
+            0x03587133 <br />
+            6103.4150517289 <br />
+            04045.5214087344 <br />
+            wG4BvVLe47qXYaNCD
+          </div>
+          <p className="text-cyan-400 text-[10px] font-bold mt-3 mb-1 tracking-widest uppercase animate-pulse">
+            DATA SCANNING
+          </p>
+          <div className="text-cyan-200/60 text-[8px] leading-relaxed font-mono">
+            xyDt98IRzw0feV0qO <br />
+            RazSWLfOvRdGdoVXx <br />
+            3DPlCbsnTJVmjdpTr
+          </div>
+        </div>
+      </div>
+
+      {/* 2. MIDDLE LEFT RADAR */}
+      <div className="absolute top-[45%] left-[-20px] lg:left-[5%] -translate-y-1/2 w-[220px] h-[220px] hidden lg:flex items-center justify-center opacity-80 z-0">
+        <div className="absolute inset-0 rounded-full border border-cyan-500/20"></div>
+        <div className="absolute inset-[15px] rounded-full border border-dashed border-cyan-500/40 animate-[spin_20s_linear_infinite]"></div>
+        <div className="absolute inset-[35px] rounded-full border-[2px] border-cyan-400/20 border-l-cyan-400 animate-[spin_10s_linear_infinite_reverse]"></div>
+        <div className="absolute inset-[50px] rounded-full border-[1px] border-cyan-500/30"></div>
+
+        {/* Core elements */}
+        <div className="absolute w-[40px] h-[40px] border border-orange-500/80 rotate-45 shadow-[0_0_15px_rgba(249,115,22,0.4)]"></div>
+        <div className="absolute w-[40px] h-[40px] border border-orange-500/80 shadow-[0_0_15px_rgba(249,115,22,0.4)] animate-pulse"></div>
+        <div className="absolute w-[8px] h-[8px] bg-cyan-300 rounded-full shadow-[0_0_10px_rgba(34,211,238,1)]"></div>
+
+        {/* Scanning line */}
+        <div className="absolute top-1/2 left-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent to-cyan-300 origin-left animate-[spin_4s_linear_infinite]"></div>
+
+        {/* Ticks */}
+        <div className="absolute -left-10 top-1/2 -translate-y-1/2 text-orange-500/60 text-[8px] flex flex-col gap-[3px] font-bold">
+          <span>200 ─</span>
+          <span>100 ─</span>
+          <span className="text-orange-400">000 ─</span>
+          <span>-100 ─</span>
+          <span>-200 ─</span>
+        </div>
+      </div>
+
+      {/* 3. BOTTOM LEFT CHART UI */}
+      <div className="absolute bottom-[10%] lg:bottom-[15%] left-[8%] lg:left-[10%] w-[140px] h-[70px] hidden xl:flex items-end gap-1 opacity-70 z-0">
+        <div className="absolute -bottom-8 w-full text-center text-[10px] text-cyan-400/80 tracking-[0.3em] font-bold">
+          {"{ 87 }"}
+        </div>
+
+        <div className="flex w-full items-end gap-[2px] h-full overflow-hidden">
+          {[...Array(24)].map((_, i) => (
+            <div
+              key={i}
+              className="flex-1 bg-cyan-500/40"
+              style={{
+                height: `${20 + Math.random() * 80}%`,
+                animation: `pulse ${2 + Math.random() * 2}s infinite alternate`,
+              }}
+            ></div>
+          ))}
+        </div>
+
+        {/* Radar sweep arch below */}
+        <div className="absolute -bottom-4 -left-4 -right-4 h-[20px] border-b-[2px] border-dotted border-cyan-500/50 rounded-b-[50%]"></div>
+        <div className="absolute -bottom-2 -left-2 -right-2 h-[15px] border-b-[1px] border-cyan-400/30 rounded-b-[50%]"></div>
+      </div>
+
+      {/* 4. MASSIVE RIGHT IRIS RING */}
+      <div className="absolute top-[10%] right-[-30%] sm:right-[-15%] lg:right-[0%] w-[400px] lg:w-[600px] h-[400px] lg:h-[600px] flex items-center justify-center opacity-30 lg:opacity-50 pointer-events-none z-0">
+        <div className="absolute inset-0 rounded-full border-[2px] border-dashed border-cyan-500/40 animate-[spin_60s_linear_infinite]"></div>
+        <div className="absolute inset-[30px] rounded-full border-[15px] border-l-transparent border-cyan-800/40 animate-[spin_40s_linear_infinite_reverse]"></div>
+        <div className="absolute inset-[60px] rounded-full border-[4px] border-cyan-500/20"></div>
+        <div className="absolute inset-[80px] rounded-full border-[1px] border-dashed border-cyan-300/50 animate-[spin_30s_linear_infinite]"></div>
+        <div className="absolute inset-[130px] rounded-full border-[25px] border-t-cyan-500/30 border-r-cyan-500/30 border-b-transparent border-l-transparent animate-[spin_20s_linear_infinite]"></div>
+        <div className="absolute inset-[130px] rounded-full border-[2px] border-cyan-400/50"></div>
+
+        {/* Center Core */}
+        <div className="absolute inset-[180px] rounded-full bg-[#020617]/50 backdrop-blur-sm border border-cyan-400/50 flex items-center justify-center shadow-[inset_0_0_50px_rgba(6,182,212,0.3)]">
+          <div className="w-[40%] h-[40%] rounded-full bg-cyan-400/30 blur-md animate-pulse"></div>
+          <div className="absolute w-[15%] h-[15%] rounded-full bg-slate-200 shadow-[0_0_20px_rgba(255,255,255,1)]"></div>
+        </div>
+
+        {/* HUD Ring Metrics */}
+        <div className="absolute top-[22%] right-[12%] bg-[#020617] border border-cyan-500/60 px-2 py-0.5 text-[10px] text-cyan-300 rotate-[12deg] tracking-widest">
+          345°
+        </div>
+        <div className="absolute bottom-[22%] right-[16%] bg-[#020617] border border-cyan-500/60 px-2 py-0.5 text-[10px] text-cyan-300 -rotate-[12deg] tracking-widest">
+          85v
+        </div>
+      </div>
+
+      {/* --- CENTRAL MAIN PANEL --- */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+        className="relative w-full max-w-[900px] z-20 xl:ml-auto xl:mr-[4%] 2xl:mr-[8%]"
       >
-        <motion.div
-          variants={slideInFromTop}
-          className="flex items-center gap-3 opacity-[0.9]"
+        {/* Outer Glow & Border Wrap with Clip Path */}
+        <div
+          className="relative p-[1px] bg-gradient-to-br from-cyan-400/80 via-cyan-500/20 to-cyan-500/60 shadow-[0_0_30px_rgba(6,182,212,0.15)] group"
+          style={{
+            clipPath:
+              "polygon(0 25px, 25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%)",
+          }}
         >
-          <div className="w-8 h-[2px] bg-cyan-400"></div>
-          <h1 className="text-cyan-400 text-xs sm:text-sm font-semibold tracking-[0.3em] uppercase">
-            Full Stack Development
-          </h1>
-        </motion.div>
-
-        <motion.div
-          variants={slideInFromLeft(0.5)}
-          className="flex flex-col gap-2 mt-2 max-w-[640px] w-auto h-auto relative z-20"
-        >
-          {/* Hello, I am */}
-          <div className="flex items-center gap-4 mb-2">
-            <span className="text-cyan-400 font-mono text-xl sm:text-2xl md:text-3xl font-bold animate-pulse">~/$</span>
-            <div className="relative w-max">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-mono text-gray-300 opacity-0 pointer-events-none tracking-wide">
-                Hello! I am
-              </h2>
-              <motion.div 
-                animate={{ width: ["0%", "100%", "100%", "0%"] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "linear", times: [0, 0.2, 0.9, 1] }}
-                className="absolute top-0 left-0 h-full overflow-hidden whitespace-nowrap border-r-[3px] border-cyan-400/50 pr-2"
-              >
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-mono text-gray-300 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)] tracking-wide">
-                  Hello! I am
-                </h2>
-              </motion.div>
-            </div>
-          </div>
-
-          {/* MD ABU AHSAN */}
-          <div className="relative w-max mt-2">
-            <h1 className="text-5xl sm:text-7xl md:text-[80px] leading-[0.9] font-black uppercase opacity-0 pointer-events-none tracking-wide">
-              Md Abu Ahsan
-            </h1>
-            <motion.div 
-              animate={{ width: ["0%", "100%", "100%", "0%"] }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear", delay: 1.6, times: [0, 0.2, 0.9, 1] }}
-              className="absolute top-0 left-0 h-full overflow-hidden whitespace-nowrap border-r-[4px] border-pink-500/50 pr-2"
-            >
-              <h1 className="text-5xl sm:text-7xl md:text-[80px] leading-[0.9] font-black uppercase text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-cyan-400 to-pink-500 drop-shadow-[0_0_15px_rgba(34,211,238,0.4)] tracking-wide">
-                Md Abu Ahsan
-              </h1>
-            </motion.div>
-          </div>
-
-          {/* SOFTWARE ENGINEER */}
-          <div className="relative w-max mt-2">
-            <h1 className="text-3xl sm:text-5xl md:text-[60px] leading-[0.9] font-bold uppercase opacity-0 pointer-events-none tracking-wide">
-              Software Engineer
-            </h1>
-            <motion.div 
-              animate={{ width: ["0%", "100%", "100%", "0%"] }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear", delay: 3.2, times: [0, 0.2, 0.9, 1] }}
-              className="absolute top-0 left-0 h-full overflow-hidden whitespace-nowrap border-r-[4px] border-indigo-400/50 pr-2"
-            >
-              <h1 className="text-3xl sm:text-5xl md:text-[60px] leading-[0.9] font-bold uppercase text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-400 to-indigo-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)] tracking-wide">
-                Software Engineer
-              </h1>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          variants={slideInFromLeft(0.8)}
-          className="text-base sm:text-lg text-slate-400 max-w-[600px] leading-relaxed mt-2"
-        >
-          Building next-generation web applications with precision-crafted code, 
-          immersive interfaces, and blazing performance across all platforms. <span className="inline-block w-3 h-5 bg-green-500 animate-pulse align-middle ml-1"></span>
-        </motion.div>
-
-        <motion.div
-          variants={slideInFromLeft(0.9)}
-          className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 max-w-[640px] w-full mt-4"
-        >
-          {/* Skill 1 */}
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center text-xs font-bold tracking-widest text-slate-300">
-              <span>HTML5</span>
-              <span className="text-cyan-400">95%</span>
-            </div>
-            <div className="w-full bg-slate-800/50 h-1.5 rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }} whileInView={{ width: "95%" }} transition={{ duration: 1.5, delay: 1 }} className="h-full bg-gradient-to-r from-orange-600 to-orange-400 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]"></motion.div>
-            </div>
-          </div>
-          {/* Skill 2 */}
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center text-xs font-bold tracking-widest text-slate-300">
-              <span>CSS3 / SASS</span>
-              <span className="text-cyan-400">92%</span>
-            </div>
-            <div className="w-full bg-slate-800/50 h-1.5 rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }} whileInView={{ width: "92%" }} transition={{ duration: 1.5, delay: 1.1 }} className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.5)]"></motion.div>
-            </div>
-          </div>
-          {/* Skill 3 */}
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center text-xs font-bold tracking-widest text-slate-300">
-              <span>JavaScript</span>
-              <span className="text-cyan-400">88%</span>
-            </div>
-            <div className="w-full bg-slate-800/50 h-1.5 rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }} whileInView={{ width: "88%" }} transition={{ duration: 1.5, delay: 1.2 }} className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 rounded-full shadow-[0_0_10px_rgba(234,179,8,0.5)]"></motion.div>
-            </div>
-          </div>
-          {/* Skill 4 */}
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center text-xs font-bold tracking-widest text-slate-300">
-              <span>React / Next</span>
-              <span className="text-cyan-400">85%</span>
-            </div>
-            <div className="w-full bg-slate-800/50 h-1.5 rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }} whileInView={{ width: "85%" }} transition={{ duration: 1.5, delay: 1.3 }} className="h-full bg-gradient-to-r from-green-600 to-green-400 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"></motion.div>
-            </div>
-          </div>
-          {/* Skill 5 */}
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center text-xs font-bold tracking-widest text-slate-300">
-              <span>PHP / Laravel</span>
-              <span className="text-cyan-400">80%</span>
-            </div>
-            <div className="w-full bg-slate-800/50 h-1.5 rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }} whileInView={{ width: "80%" }} transition={{ duration: 1.5, delay: 1.4 }} className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.5)]"></motion.div>
-            </div>
-          </div>
-          {/* Skill 6 */}
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center text-xs font-bold tracking-widest text-slate-300">
-              <span>Node.js</span>
-              <span className="text-cyan-400">78%</span>
-            </div>
-            <div className="w-full bg-slate-800/50 h-1.5 rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }} whileInView={{ width: "78%" }} transition={{ duration: 1.5, delay: 1.5 }} className="h-full bg-gradient-to-r from-pink-600 to-pink-400 rounded-full shadow-[0_0_10px_rgba(236,72,153,0.5)]"></motion.div>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          variants={slideInFromLeft(1)}
-          className="flex flex-wrap gap-4 pt-6"
-        >
-          <a
-            href="#projects"
-            className="py-3 px-8 text-center text-cyan-400 font-bold tracking-[0.1em] uppercase cursor-pointer rounded-md border border-cyan-500/50 bg-cyan-950/20 hover:bg-cyan-500/10 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] transition-all"
+          <div
+            className="bg-[#0b1426]/90 backdrop-blur-xl w-full h-full p-6 sm:p-10 md:p-12 relative overflow-hidden"
+            style={{
+              clipPath:
+                "polygon(0 25px, 25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%)",
+            }}
           >
-            View Portfolio
-          </a>
-          <a
-            href="#contact"
-            className="py-3 px-8 text-center text-purple-400 font-bold tracking-[0.1em] uppercase cursor-pointer rounded-md border border-purple-500/50 bg-purple-950/20 hover:bg-purple-500/10 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all"
-          >
-            Hire Me
-          </a>
-        </motion.div>
+            {/* Added: Hacker Code Background Image with deep blend modes */}
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-10 mix-blend-luminosity z-0 pointer-events-none"
+              style={{
+                backgroundImage:
+                  "url('https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=2070&auto=format&fit=crop')",
+              }}
+            ></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0b1426]/50 via-transparent to-[#0b1426]/90 z-0 pointer-events-none"></div>
+
+            {/* Highlight bar left */}
+            <div className="absolute left-0 top-[20%] w-[3px] h-[60px] bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,1)] z-10" />
+            <div className="absolute right-0 bottom-[20%] w-[3px] h-[60px] bg-cyan-500 shadow-[0_0_15px_rgba(6,182,212,1)] z-10" />
+
+            {/* Top Tech accent corners */}
+            <div className="absolute top-[8px] right-[8px] w-6 h-6 border-t-2 border-r-2 border-cyan-500/50 z-10"></div>
+            <div className="absolute bottom-[8px] left-[8px] w-6 h-6 border-b-2 border-l-2 border-cyan-500/50 z-10"></div>
+
+            <div className="flex flex-col items-center sm:items-start mb-6 md:mb-10 w-full relative z-10">
+              {/* Top Animated Line */}
+              <div className="flex w-full max-w-[280px] sm:max-w-[400px] h-[3px] sm:h-[4px] mb-3 relative overflow-hidden hidden sm:flex">
+                <div className="w-[15%] h-full bg-[#a78bfa] relative z-10"></div>
+                <div className="w-[50%] h-full bg-[#22d3ee] shadow-[0_0_10px_rgba(34,211,238,0.8)] relative z-10"></div>
+                <div className="w-[35%] h-full bg-teal-900/60 relative z-10"></div>
+                <motion.div
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "600%" }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="absolute top-0 left-0 w-[40px] h-full bg-white/80 blur-[3px] z-20"
+                ></motion.div>
+              </div>
+
+              {/* Title Text - Coder Typing Vibe */}
+              <h1 className="flex flex-col sm:flex-row items-start sm:items-center text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-[0.2em] ml-2 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)] font-mono">
+                <span className="text-cyan-500 text-xl sm:text-3xl mr-3 animate-pulse whitespace-nowrap mb-2 sm:mb-0">
+                  root@sys:~#
+                </span>
+                <span className="flex">
+                  {"ABOUT_ME".split("").map((char, index) => (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.15, duration: 0 }}
+                      key={index}
+                      className={
+                        char === "_"
+                          ? "text-transparent"
+                          : "text-white font-sans"
+                      }
+                    >
+                      {char === "_" ? (
+                        "\u00A0"
+                      ) : char === "A" ? (
+                        "Δ"
+                      ) : char === "E" ? (
+                        "Ξ"
+                      ) : char === "O" ? (
+                        <span className="relative inline-flex items-center justify-center">
+                          O
+                          <span className="absolute w-[6px] h-[6px] bg-white rounded-full"></span>
+                        </span>
+                      ) : (
+                        char
+                      )}
+                    </motion.span>
+                  ))}
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [1, 0, 1] }}
+                    transition={{ repeat: Infinity, duration: 0.8, delay: 1 }}
+                    className="inline-block w-[12px] sm:w-[20px] h-[30px] bg-green-500 ml-2 mt-2"
+                  ></motion.span>
+                </span>
+              </h1>
+
+              {/* Bottom Animated Line */}
+              <div className="flex w-full max-w-[280px] sm:max-w-[400px] h-[3px] sm:h-[4px] mt-3 relative overflow-hidden hidden sm:flex">
+                <div className="w-[60%] h-full bg-[#22d3ee] shadow-[0_0_10px_rgba(34,211,238,0.8)] relative z-10"></div>
+                <div className="w-[10%] h-full bg-[#a78bfa] relative z-10"></div>
+                <div className="w-[30%] h-full bg-teal-900/60 relative z-10"></div>
+                <motion.div
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "600%" }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "linear",
+                    delay: 1,
+                  }}
+                  className="absolute top-0 left-0 w-[40px] h-full bg-white/80 blur-[3px] z-20"
+                ></motion.div>
+              </div>
+            </div>
+
+            <div className="text-sm md:text-base text-slate-300 max-w-[750px] leading-relaxed mb-8 relative z-10 font-mono tracking-tight bg-black/40 p-4 border-l-4 border-cyan-500 rounded backdrop-blur-sm">
+              <span className="text-green-400">&gt; RUN exe --about</span>
+              <br />
+              <span className="text-orange-400 font-bold tracking-wide">
+                <TypewriterText
+                  text="I am a Full-Stack Web Developer"
+                  speed={40}
+                  delay={1800}
+                />
+              </span>{" "}
+              {consoleReady ? (
+                <TypewriterText
+                  text={
+                    "with strong design and coding expertise, capable of translating client requirements into innovative, scalable, and high-quality web applications.<br/><br/><span style='color: #22d3ee;'>I blend robust back-end architecture with modern, visually stunning front-end interfaces</span> to deliver seamless user experiences. My passion lies in writing clean, modular code, continuously learning and adapting to new technologies in the ever-evolving digital landscape."
+                  }
+                  speed={15}
+                  delay={3200}
+                />
+              ) : null}
+            </div>
+
+            {/* Categorized Tech Skills */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pr-0 sm:pr-0 relative z-10">
+              {/* Category 1: Web Designing */}
+              <div>
+                <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                  <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                  Web Designing
+                </h3>
+                <div className="flex flex-wrap gap-2.5">
+                  {[
+                    "HTML",
+                    "CSS (Sass)",
+                    "Tailwind CSS",
+                    "JavaScript",
+                    "jQuery",
+                    "Bootstrap",
+                    "Vue.js",
+                    "React.js",
+                    "Next.js",
+                  ].map((tech, idx) => (
+                    <motion.span
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, delay: 0.1 * idx }}
+                      key={tech}
+                      className="px-3 py-1.5 bg-cyan-950/30 border border-cyan-500/20 text-cyan-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white transition-all cursor-default"
+                    >
+                      {tech}
+                    </motion.span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Categories 2 & 3: Dev & DB */}
+              <div className="flex flex-col gap-6">
+                <div>
+                  <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                    <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                    Web Development
+                  </h3>
+                  <div className="flex flex-wrap gap-2.5">
+                    {["PHP", "Laravel", "Node.js"].map((tech, idx) => (
+                      <motion.span
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 * idx }}
+                        key={tech}
+                        className="px-3 py-1.5 bg-orange-950/30 border border-orange-500/20 text-orange-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(249,115,22,0.1)] hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] hover:border-orange-400 hover:bg-orange-500/20 hover:text-white transition-all cursor-default"
+                      >
+                        {tech}
+                      </motion.span>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                    <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                    Database
+                  </h3>
+                  <div className="flex flex-wrap gap-2.5">
+                    {["MySQL", "MongoDB"].map((tech, idx) => (
+                      <motion.span
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 * idx }}
+                        key={tech}
+                        className="px-3 py-1.5 bg-[#8b5cf6]/20 border border-[#8b5cf6]/30 text-[#ddd6fe] text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(139,92,246,0.1)] hover:shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:border-[#8b5cf6] hover:bg-[#8b5cf6]/30 hover:text-white transition-all cursor-default"
+                      >
+                        {tech}
+                      </motion.span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* --- ORANGE NODE CONNECTORS (Linked to Main Panel) --- */}
+        <div className="absolute top-1/2 left-[-160px] -translate-y-1/2 w-[160px] h-[200px] hidden xl:block z-0 pointer-events-none">
+          <svg className="w-full h-full overflow-visible">
+            {/* Top line to node 1 */}
+            <path
+              d="M 160 80 L 100 80 L 50 40 L 40 40"
+              fill="none"
+              stroke="#f97316"
+              strokeWidth="1"
+              strokeOpacity="0.6"
+              className="animate-[pulse_3s_infinite]"
+            />
+            {/* Bottom line to node 2 */}
+            <path
+              d="M 160 140 L 100 140 L 50 180 L 40 180"
+              fill="none"
+              stroke="#f97316"
+              strokeWidth="1"
+              strokeOpacity="0.6"
+              className="animate-[pulse_3s_infinite_1s]"
+            />
+
+            {/* Dots at Panel connection */}
+            <circle cx="160" cy="80" r="3" fill="#f97316" />
+            <circle cx="160" cy="140" r="3" fill="#f97316" />
+            {/* Angles Dots */}
+            <circle cx="100" cy="80" r="1.5" fill="#f97316" />
+            <circle cx="100" cy="140" r="1.5" fill="#f97316" />
+          </svg>
+
+          {/* Top 3D Cylinder Node */}
+          <div className="absolute top-[25px] left-[15px] w-12 h-6 group">
+            {/* Ring top */}
+            <div className="absolute inset-0 rounded-[50%] border-2 border-orange-500/80 bg-[#1a0500]/80 shadow-[0_0_15px_rgba(249,115,22,0.8)] z-10"></div>
+            {/* Center core */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-1.5 rounded-[50%] bg-orange-400 shadow-[0_0_15px_rgba(249,115,22,1)] animate-pulse z-10"></div>
+            {/* Red emitting dots on edge */}
+            <div className="absolute top-1 left-2 w-1 h-1 rounded-full bg-red-500 z-10"></div>
+            <div className="absolute bottom-1 right-2 w-1 h-1 rounded-full bg-red-500 z-10"></div>
+            {/* Glowing beam downward */}
+            <div
+              className="absolute top-[50%] left-0 w-full h-[60px] bg-gradient-to-b from-orange-500/40 to-transparent z-0 pointer-events-none opacity-60"
+              style={{ clipPath: "polygon(0 0, 100% 0, 85% 100%, 15% 100%)" }}
+            ></div>
+          </div>
+
+          {/* Bottom 3D Cylinder Node */}
+          <div className="absolute top-[165px] left-[15px] w-12 h-6 group">
+            <div className="absolute inset-0 rounded-[50%] border-2 border-orange-500/80 bg-[#1a0500]/80 shadow-[0_0_15px_rgba(249,115,22,0.8)] z-10"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-1.5 rounded-[50%] bg-orange-400 shadow-[0_0_15px_rgba(249,115,22,1)] animate-pulse z-10"></div>
+            <div className="absolute top-1 right-2 w-1 h-1 rounded-full bg-red-500 z-10"></div>
+            <div className="absolute bottom-1 left-2 w-1 h-1 rounded-full bg-red-500 z-10"></div>
+            <div
+              className="absolute top-[50%] left-0 w-full h-[60px] bg-gradient-to-b from-orange-500/40 to-transparent z-0 pointer-events-none opacity-60"
+              style={{ clipPath: "polygon(0 0, 100% 0, 85% 100%, 15% 100%)" }}
+            ></div>
+          </div>
+        </div>
       </motion.div>
-    </motion.div>
+
+      {/* Global CSS for Animations */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes scan {
+          0% { top: 0; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+      `,
+        }}
+      />
+    </div>
   );
 };
