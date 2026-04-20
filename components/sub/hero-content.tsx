@@ -73,7 +73,7 @@ export const HeroContent = () => {
         <svg
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
-          className="w-full h-full overflow-visible opacity-50"
+          className="w-full h-full overflow-visible opacity-80 mix-blend-screen"
         >
           <defs>
             <linearGradient
@@ -83,106 +83,273 @@ export const HeroContent = () => {
               x2="100%"
               y2="0%"
             >
-              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.8" />
+              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.4" />
+              <stop offset="30%" stopColor="#3b82f6" stopOpacity="1" />
               <stop offset="50%" stopColor="#8b5cf6" stopOpacity="1" />
-              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.8" />
+              <stop offset="70%" stopColor="#d946ef" stopOpacity="1" />
+              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.4" />
             </linearGradient>
+
+            <linearGradient id="glowPulse" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0" />
+              <stop offset="50%" stopColor="#22d3ee" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+            </linearGradient>
+
             <filter
               id="glowConnection"
-              x="-50%"
-              y="-50%"
-              width="200%"
-              height="200%"
+              x="-100%"
+              y="-100%"
+              width="300%"
+              height="300%"
             >
-              <feGaussianBlur stdDeviation="1.5" result="blur" />
+              <feGaussianBlur stdDeviation="2.5" result="blur1" />
+              <feGaussianBlur stdDeviation="5" result="blur2" />
               <feMerge>
-                <feMergeNode in="blur" />
+                <feMergeNode in="blur2" />
+                <feMergeNode in="blur1" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            <filter id="intenseGlow">
+              <feGaussianBlur stdDeviation="1.5" result="blur" />
+              <feComponentTransfer in="blur" result="glow">
+                <feFuncA type="linear" slope="3" />
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode in="glow" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
           </defs>
           <g filter="url(#glowConnection)">
-            {/* Geometric Hub Hub Network Connectors */}
+            {/* Background Faint Track */}
             <path
-              d="M 0 50 L 30 50 L 40 30 L 60 30 L 70 50 L 100 50 M 30 50 L 40 70 L 60 70 L 70 50 M 0 50 L 100 50"
+              d="M 22 50 L 30 50 L 35 30 L 45 30 L 55 50 M 30 50 L 35 70 L 45 70 L 55 50 M 22 50 L 95 50"
               fill="none"
-              stroke="url(#connectorGradient)"
-              strokeWidth="0.5"
-              strokeDasharray="2 3"
-              style={{
-                strokeDashoffset: 100,
-                animation: "dashFlow 5s linear infinite",
-              }}
-            />
-            {/* Geometric Hub Joint Nodes */}
-            <rect
-              x="29"
-              y="49"
-              width="2"
-              height="2"
-              fill="#8b5cf6"
-              className="animate-pulse"
-            />
-            <rect
-              x="69"
-              y="49"
-              width="2"
-              height="2"
-              fill="#8b5cf6"
-              className="animate-pulse"
-            />
-            <circle cx="40" cy="30" r="0.8" fill="#22d3ee" />
-            <circle cx="60" cy="30" r="0.8" fill="#22d3ee" />
-            <circle cx="40" cy="70" r="0.8" fill="#22d3ee" />
-            <circle cx="60" cy="70" r="0.8" fill="#22d3ee" />
-            <circle
-              cx="50"
-              cy="50"
-              r="1.5"
-              fill="#8b5cf6"
-              className="animate-ping"
+              stroke="rgba(34, 211, 238, 0.15)"
+              strokeWidth="0.8"
             />
 
-            {/* Traveling Data Packets - Upper Route */}
-            <circle cx="0" cy="50" r="1" fill="#22d3ee">
-              <animateMotion
-                dur="4s"
+            {/* Animated Solid Core Energy Line - piercing the right core */}
+            <path
+              d="M 22 50 L 95 50"
+              fill="none"
+              stroke="url(#glowPulse)"
+              strokeWidth="1.5"
+              className="opacity-50"
+              style={{
+                strokeDasharray: "200",
+                strokeDashoffset: 200,
+                animation: "dashFlow 4s ease-in-out infinite alternate",
+              }}
+            />
+
+            {/* Geometric Hub Network Connectors - Dashed (Ends right before outer shell) */}
+            <path
+              d="M 22 50 L 30 50 L 35 30 L 45 30 L 55 50 M 30 50 L 35 70 L 45 70 L 55 50 M 22 50 L 95 50 M 35 30 L 35 70 M 45 30 L 45 70 M 40 30 L 40 70"
+              fill="none"
+              stroke="url(#connectorGradient)"
+              strokeWidth="0.8"
+              strokeDasharray="4 6"
+              style={{
+                strokeDashoffset: 100,
+                animation: "dashFlow 6s linear infinite",
+              }}
+            />
+
+            {/* Main Diamond Junctions */}
+            <path
+              d="M 30 48 L 32 50 L 30 52 L 28 50 Z"
+              fill="#22d3ee"
+              className="animate-pulse"
+              filter="url(#intenseGlow)"
+            />
+            <path
+              d="M 55 48 L 57 50 L 55 52 L 53 50 Z"
+              fill="#e879f9"
+              className="animate-pulse"
+              filter="url(#intenseGlow)"
+            />
+
+            <circle
+              cx="35"
+              cy="30"
+              r="1.2"
+              fill="#22d3ee"
+              filter="url(#intenseGlow)"
+            />
+            <circle
+              cx="45"
+              cy="30"
+              r="1.2"
+              fill="#8b5cf6"
+              filter="url(#intenseGlow)"
+            />
+            <circle
+              cx="35"
+              cy="70"
+              r="1.2"
+              fill="#8b5cf6"
+              filter="url(#intenseGlow)"
+            />
+            <circle
+              cx="45"
+              cy="70"
+              r="1.2"
+              fill="#22d3ee"
+              filter="url(#intenseGlow)"
+            />
+
+            {/* Core Endpoints (Sockets) - Left Socket (22), Outer Right Shell (55), Inner Right Core (95) */}
+            <circle
+              cx="22"
+              cy="50"
+              r="2"
+              fill="none"
+              stroke="#06b6d4"
+              strokeWidth="1"
+              className="animate-[ping_2s_linear_infinite]"
+            />
+            <circle
+              cx="55"
+              cy="50"
+              r="2"
+              fill="none"
+              stroke="#8b5cf6"
+              strokeWidth="1"
+              className="animate-[ping_3s_linear_infinite]"
+            />
+            <circle
+              cx="95"
+              cy="50"
+              r="2"
+              fill="none"
+              stroke="#d946ef"
+              strokeWidth="1"
+              className="animate-[ping_2s_linear_infinite]"
+            />
+
+            <circle
+              cx="22"
+              cy="50"
+              r="1.5"
+              fill="#22d3ee"
+              filter="url(#intenseGlow)"
+            />
+            <circle
+              cx="55"
+              cy="50"
+              r="1.2"
+              fill="#8b5cf6"
+              filter="url(#intenseGlow)"
+            />
+            <circle
+              cx="95"
+              cy="50"
+              r="1.5"
+              fill="#e879f9"
+              filter="url(#intenseGlow)"
+            />
+
+            {/* Center Core Process Node */}
+            <circle
+              cx="40"
+              cy="50"
+              r="3"
+              fill="none"
+              stroke="#22d3ee"
+              strokeWidth="0.5"
+              className="animate-[spin_4s_linear_infinite]"
+              strokeDasharray="2 2"
+            />
+            <circle
+              cx="40"
+              cy="50"
+              r="1.5"
+              fill="#e879f9"
+              filter="url(#intenseGlow)"
+            >
+              <animate
+                attributeName="r"
+                values="1.5;2.5;1.5"
+                dur="2s"
                 repeatCount="indefinite"
-                path="M 0 50 L 30 50 L 40 30 L 60 30 L 70 50 L 100 50"
               />
             </circle>
+
+            {/* HIGH SPEED PACKETS */}
+
             <circle
-              cx="0"
+              cx="22"
               cy="50"
-              r="1.3"
+              r="1.5"
               fill="#e879f9"
-              filter="url(#glowConnection)"
+              filter="url(#intenseGlow)"
+            >
+              <animateMotion
+                dur="3s"
+                repeatCount="indefinite"
+                path="M 22 50 L 30 50 L 35 30 L 45 30 L 55 50"
+              />
+            </circle>
+            <rect
+              x="21"
+              y="49"
+              width="3"
+              height="1.5"
+              fill="#22d3ee"
+              filter="url(#intenseGlow)"
+            >
+              <animateMotion
+                dur="3s"
+                begin="1.5s"
+                repeatCount="indefinite"
+                path="M 22 50 L 30 50 L 35 30 L 45 30 L 55 50"
+              />
+            </rect>
+
+            <path
+              d="M 21 49 L 23 50 L 21 51 Z"
+              fill="#22d3ee"
+              filter="url(#intenseGlow)"
             >
               <animateMotion
                 dur="4s"
-                begin="2s"
-                repeatCount="indefinite"
-                path="M 0 50 L 30 50 L 40 30 L 60 30 L 70 50 L 100 50"
-              />
-            </circle>
-
-            {/* Traveling Data Packets - Lower Route */}
-            <circle cx="0" cy="50" r="1" fill="#22d3ee">
-              <animateMotion
-                dur="5s"
-                begin="1s"
-                repeatCount="indefinite"
-                path="M 0 50 L 30 50 L 40 70 L 60 70 L 70 50 L 100 50"
-              />
-            </circle>
-
-            {/* Traveling Data Packets - Direct Core Route */}
-            <rect x="-1" y="49" width="2" height="2" fill="#22d3ee">
-              <animateMotion
-                dur="3s"
                 begin="0.5s"
                 repeatCount="indefinite"
-                path="M 0 50 L 100 50"
+                path="M 22 50 L 30 50 L 35 70 L 45 70 L 55 50"
+              />
+            </path>
+            <circle
+              cx="22"
+              cy="50"
+              r="1.2"
+              fill="#8b5cf6"
+              filter="url(#intenseGlow)"
+            >
+              <animateMotion
+                dur="4s"
+                begin="2.5s"
+                repeatCount="indefinite"
+                path="M 22 50 L 30 50 L 35 70 L 45 70 L 55 50"
+              />
+            </circle>
+
+            <rect
+              x="21"
+              y="49"
+              width="2"
+              height="2"
+              fill="#22d3ee"
+              filter="url(#intenseGlow)"
+            >
+              <animateMotion
+                dur="2s"
+                begin="0.2s"
+                repeatCount="indefinite"
+                path="M 22 50 L 95 50"
               />
             </rect>
           </g>
@@ -238,21 +405,6 @@ export const HeroContent = () => {
               className="inline-block w-[4px] md:w-[6px] h-[0.9em] bg-cyan-400 ml-1 shadow-[0_0_15px_rgba(34,211,238,1)]"
             />
           </h1>
-
-          {/* Status Badge */}
-          <div className="mt-5 flex items-center justify-center gap-3 font-mono relative group cursor-pointer hover:scale-105 transition-transform duration-300">
-            {/* Outer glowing border effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-purple-500 to-indigo-500 rounded-full blur opacity-40 group-hover:opacity-100 transition duration-500 animate-pulse"></div>
-            <div className="relative flex items-center justify-center gap-2 bg-[#020617]/80 border border-cyan-500/50 px-5 py-2 rounded-full overflow-hidden backdrop-blur-md w-full sm:w-auto">
-              {/* Shine sweep animation */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out"></div>
-
-              <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_cyan] animate-ping shrink-0 hidden sm:block"></div>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-100 to-cyan-300 text-xs sm:text-sm uppercase tracking-[0.2em] font-bold">
-                Web Full Stack Developer
-              </span>
-            </div>
-          </div>
         </div>
 
         {/* CIRCLE CENTER */}
@@ -481,6 +633,20 @@ export const HeroContent = () => {
               Download CV
             </span>
           </button>
+        </div>
+        {/* Status Badge */}
+        <div className="mt-5 flex items-center justify-center gap-3 font-mono relative group cursor-pointer hover:scale-105 transition-transform duration-300">
+          {/* Outer glowing border effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-purple-500 to-indigo-500 rounded-full blur opacity-40 group-hover:opacity-100 transition duration-500 animate-pulse"></div>
+          <div className="relative flex items-center justify-center gap-2 bg-[#020617]/80 border border-cyan-500/50 px-5 py-2 rounded-full overflow-hidden backdrop-blur-md w-full sm:w-auto">
+            {/* Shine sweep animation */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out"></div>
+
+            <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_cyan] animate-ping shrink-0 hidden sm:block"></div>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-100 to-cyan-300 text-xs sm:text-sm uppercase tracking-[0.2em] font-bold">
+              Web Full Stack Developer
+            </span>
+          </div>
         </div>
       </motion.div>
 
