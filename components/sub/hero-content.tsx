@@ -69,7 +69,7 @@ export const HeroContent = () => {
       className="flex flex-col xl:flex-row items-center xl:items-center justify-center xl:justify-center px-4 md:px-10 pt-20 pb-4 xl:pt-24 xl:pb-10 w-full z-[20] min-h-[100dvh] relative"
     >
       {/* GLOBAL CONNECTION HUB BETWEEN LEFT & RIGHT CORES */}
-      <div className="absolute top-1/2 left-[25%] w-[50%] h-[100px] -translate-y-1/2 hidden xl:block z-0 pointer-events-none origin-left">
+      <div className="absolute top-[53%] left-[25%] w-[50%] h-[100px] -translate-y-1/2 hidden xl:block z-0 pointer-events-none origin-left">
         <svg
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
@@ -204,7 +204,7 @@ export const HeroContent = () => {
         className="w-full flex flex-col items-center justify-center xl:justify-center xl:pr-0 h-full sm:h-auto basis-1/2"
       >
         {/* OUTSIDE TOP: Details Section / Name */}
-        <div className="flex flex-col w-full max-w-[500px] items-center z-10 mb-4 sm:mb-10 text-center">
+        <div className="flex flex-col w-full max-w-[500px] items-center z-10 mb-4 sm:mb-20 text-center">
           <div className="flex items-center gap-2 w-full justify-center">
             <span className="h-[1px] w-8 bg-cyan-500/50 hidden sm:block"></span>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-cyan-300 to-indigo-400 font-mono text-[10px] sm:text-xs tracking-[0.3em] font-bold uppercase drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] animate-pulse">
@@ -439,7 +439,7 @@ export const HeroContent = () => {
         </div>
 
         {/* OUTSIDE BOTTOM: Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-[500px] mt-6 sm:mt-10 z-10 relative">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-[500px] mt-6 sm:mt-20 z-10 relative">
           <button className="relative w-full sm:w-auto px-8 py-3 rounded-full overflow-hidden group/hire border border-cyan-500/50 bg-cyan-950/20 hover:bg-cyan-500/10 transition-all duration-300">
             <div className="absolute inset-0 bg-cyan-500/20 translate-y-[100%] group-hover/hire:translate-y-[0%] transition-transform duration-300 ease-in-out"></div>
             <span className="relative flex items-center justify-center gap-2 text-cyan-300 font-bold tracking-widest uppercase text-[12px] sm:text-sm group-hover/hire:text-cyan-100 transition-colors drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
