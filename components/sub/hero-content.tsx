@@ -299,7 +299,7 @@ export const HeroContent = () => {
               transition={{
                 repeat: Infinity,
                 duration: 0.8,
-                ease: "steps(2, end)",
+                ease: "linear",
               }}
               className="inline-block w-[4px] md:w-[6px] h-[0.9em] bg-cyan-400 ml-1 shadow-[0_0_15px_rgba(34,211,238,1)]"
             />

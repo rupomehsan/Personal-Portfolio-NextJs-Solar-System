@@ -1,8 +1,9 @@
-import { Encryption } from "@/components/main/encryption";
+import { Contact } from "@/components/main/contact";
 import { Hero } from "@/components/main/hero";
 import { About } from "@/components/main/about";
 import { Projects } from "@/components/main/projects";
-import { Skills } from "@/components/main/skills";
+import { Blogs } from "@/components/main/blogs";
+import { Skills } from "@/components/main/experience";
 
 export default function Home() {
   return (
@@ -11,8 +12,9 @@ export default function Home() {
         <Hero />
         <About />
         <Skills />
-        <Encryption />
         <Projects />
+        <Blogs />
+        <Contact />
       </div>
     </main>
   );

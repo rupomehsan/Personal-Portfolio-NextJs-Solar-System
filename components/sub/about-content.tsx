@@ -52,6 +52,7 @@ const TypewriterText = ({
 export const AboutContent = () => {
   const [mounted, setMounted] = useState(false);
   const [consoleReady, setConsoleReady] = useState(false);
+  const [activeTab, setActiveTab] = useState("skills");
 
   useEffect(() => {
     setMounted(true);
@@ -274,11 +275,38 @@ export const AboutContent = () => {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-        className="relative w-full max-w-[900px] z-20 xl:ml-auto xl:mr-[4%] 2xl:mr-[8%]"
+        className="relative w-full max-w-[900px] z-20 xl:ml-auto xl:mr-[4%] 2xl:mr-[8%] flex flex-col items-center xl:items-end"
       >
+        {/* TABS OUTSIDE THE CARD */}
+        <div className="flex flex-row justify-center sm:justify-start gap-2 sm:gap-4 mb-4 relative z-30 w-full xl:w-auto">
+          {["skills", "education", "services"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 sm:px-8 py-2 sm:py-2.5 font-mono text-[10px] sm:text-xs uppercase tracking-widest border transition-all duration-300 relative overflow-hidden group/tab ${
+                activeTab === tab
+                  ? "border-cyan-400 bg-cyan-500/20 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.5)]"
+                  : "border-cyan-800/50 bg-[#0b1426]/80 text-cyan-500/60 hover:border-cyan-500/80 hover:text-cyan-300 hover:bg-cyan-900/40 backdrop-blur-md"
+              }`}
+              style={{
+                clipPath:
+                  "polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)",
+              }}
+            >
+              <div className="absolute inset-0 w-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent group-hover/tab:w-full transition-all duration-700 ease-out z-0"></div>
+              <span className="relative z-10 flex items-center gap-2 font-bold">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${activeTab === tab ? "bg-cyan-400 animate-pulse" : "bg-transparent border border-cyan-700"}`}
+                ></span>
+                {tab}
+              </span>
+            </button>
+          ))}
+        </div>
+
         {/* Outer Glow & Border Wrap with Clip Path */}
         <div
-          className="relative p-[1px] bg-gradient-to-br from-cyan-400/80 via-cyan-500/20 to-cyan-500/60 shadow-[0_0_30px_rgba(6,182,212,0.15)] group"
+          className="relative p-[1px] bg-gradient-to-br from-cyan-400/80 via-cyan-500/20 to-cyan-500/60 shadow-[0_0_30px_rgba(6,182,212,0.15)] group w-full"
           style={{
             clipPath:
               "polygon(0 25px, 25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%)",
@@ -406,81 +434,283 @@ export const AboutContent = () => {
               ) : null}
             </div>
 
-            {/* Categorized Tech Skills */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pr-0 sm:pr-0 relative z-10">
-              {/* Category 1: Web Designing */}
-              <div>
-                <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
-                  <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                  Web Designing
-                </h3>
-                <div className="flex flex-wrap gap-2.5">
-                  {[
-                    "HTML",
-                    "CSS (Sass)",
-                    "Tailwind CSS",
-                    "JavaScript",
-                    "jQuery",
-                    "Bootstrap",
-                    "Vue.js",
-                    "React.js",
-                    "Next.js",
-                  ].map((tech, idx) => (
-                    <motion.span
-                      initial={{ opacity: 0, x: -10 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: 0.1 * idx }}
-                      key={tech}
-                      className="px-3 py-1.5 bg-cyan-950/30 border border-cyan-500/20 text-cyan-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white transition-all cursor-default"
-                    >
-                      {tech}
-                    </motion.span>
-                  ))}
-                </div>
-              </div>
+            {/* DYNAMIC TAB CONTENT */}
+            <div className="relative z-10 min-h-[300px] mt-6">
+              {activeTab === "skills" && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-6 pr-0 sm:pr-0"
+                >
+                  {/* Category 1 & 4: Web Designing & Version Control */}
+                  <div className="flex flex-col gap-6">
+                    <div>
+                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                        Web Designing
+                      </h3>
+                      <div className="flex flex-wrap gap-2.5">
+                        {[
+                          "HTML",
+                          "CSS (Sass)",
+                          "Tailwind CSS",
+                          "JavaScript",
+                          "jQuery",
+                          "Bootstrap",
+                          "Vue.js",
+                          "React.js",
+                        ].map((tech, idx) => (
+                          <motion.span
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1 * idx }}
+                            key={tech}
+                            className="px-3 py-1.5 bg-cyan-950/30 border border-cyan-500/20 text-cyan-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white transition-all cursor-default"
+                          >
+                            {tech}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </div>
 
-              {/* Categories 2 & 3: Dev & DB */}
-              <div className="flex flex-col gap-6">
-                <div>
-                  <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
-                    <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                    Web Development
-                  </h3>
-                  <div className="flex flex-wrap gap-2.5">
-                    {["PHP", "Laravel", "Node.js"].map((tech, idx) => (
-                      <motion.span
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.4, delay: 0.1 * idx }}
-                        key={tech}
-                        className="px-3 py-1.5 bg-orange-950/30 border border-orange-500/20 text-orange-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(249,115,22,0.1)] hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] hover:border-orange-400 hover:bg-orange-500/20 hover:text-white transition-all cursor-default"
-                      >
-                        {tech}
-                      </motion.span>
-                    ))}
+                    <div>
+                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                        Version Control
+                      </h3>
+                      <div className="flex flex-wrap gap-2.5">
+                        {["Git", "GitHub", "GitLab"].map((tech, idx) => (
+                          <motion.span
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1 * idx }}
+                            key={tech}
+                            className="px-3 py-1.5 bg-green-950/30 border border-green-500/20 text-green-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(34,197,94,0.1)] hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:border-green-400 hover:bg-green-500/20 hover:text-white transition-all cursor-default"
+                          >
+                            {tech}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
-                    <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                    Database
-                  </h3>
-                  <div className="flex flex-wrap gap-2.5">
-                    {["MySQL", "MongoDB"].map((tech, idx) => (
-                      <motion.span
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.4, delay: 0.1 * idx }}
-                        key={tech}
-                        className="px-3 py-1.5 bg-[#8b5cf6]/20 border border-[#8b5cf6]/30 text-[#ddd6fe] text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(139,92,246,0.1)] hover:shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:border-[#8b5cf6] hover:bg-[#8b5cf6]/30 hover:text-white transition-all cursor-default"
-                      >
-                        {tech}
-                      </motion.span>
-                    ))}
+                  {/* Categories 2, 3 & 5: Dev, DB & OS */}
+                  <div className="flex flex-col gap-6">
+                    <div>
+                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                        Web Development
+                      </h3>
+                      <div className="flex flex-wrap gap-2.5">
+                        {["PHP", "Laravel", "Node Js"].map((tech, idx) => (
+                          <motion.span
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1 * idx }}
+                            key={tech}
+                            className="px-3 py-1.5 bg-orange-950/30 border border-orange-500/20 text-orange-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(249,115,22,0.1)] hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] hover:border-orange-400 hover:bg-orange-500/20 hover:text-white transition-all cursor-default"
+                          >
+                            {tech}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                        Database
+                      </h3>
+                      <div className="flex flex-wrap gap-2.5">
+                        {["MySQL", "MongoDB"].map((tech, idx) => (
+                          <motion.span
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1 * idx }}
+                            key={tech}
+                            className="px-3 py-1.5 bg-[#8b5cf6]/20 border border-[#8b5cf6]/30 text-[#ddd6fe] text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(139,92,246,0.1)] hover:shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:border-[#8b5cf6] hover:bg-[#8b5cf6]/30 hover:text-white transition-all cursor-default"
+                          >
+                            {tech}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                        Working Exp.
+                      </h3>
+                      <div className="flex flex-wrap gap-2.5">
+                        {["Cpanel", "VPS", "DevOps", "CI/CD"].map(
+                          (tech, idx) => (
+                            <motion.span
+                              initial={{ opacity: 0, x: -10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.4, delay: 0.1 * idx }}
+                              key={tech}
+                              className="px-3 py-1.5 bg-blue-950/30 border border-blue-500/20 text-blue-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(59,130,246,0.1)] hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:border-blue-400 hover:bg-blue-500/20 hover:text-white transition-all cursor-default"
+                            >
+                              {tech}
+                            </motion.span>
+                          ),
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                        Operating System
+                      </h3>
+                      <div className="flex flex-wrap gap-2.5">
+                        {["Linux", "Windows"].map((tech, idx) => (
+                          <motion.span
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1 * idx }}
+                            key={tech}
+                            className="px-3 py-1.5 bg-red-950/30 border border-red-500/20 text-red-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(239,68,68,0.1)] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:border-red-400 hover:bg-red-500/20 hover:text-white transition-all cursor-default"
+                          >
+                            {tech}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              )}
+
+              {activeTab === "education" && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="space-y-6"
+                >
+                  <div className="relative pl-6 border-l border-cyan-500/30 space-y-6">
+                    <div className="border-l-[3px] border-cyan-500/50 pl-6 relative">
+                      <div className="absolute w-[14px] h-[14px] bg-cyan-950 border-2 border-cyan-400 rounded-full -left-[9px] top-0 shadow-[0_0_15px_rgba(34,211,238,0.8)] z-10 flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 bg-cyan-200 rounded-full animate-pulse"></div>
+                      </div>
+                      <div className="absolute w-6 h-[2px] bg-cyan-500/50 -left-[2px] top-1.5"></div>
+                      <p className="text-cyan-400 text-xs font-bold tracking-widest uppercase mb-1 flex items-center gap-2 font-mono">
+                        <span className="text-orange-400">&gt;</span> 2015 -
+                        2020
+                      </p>
+                      <h3 className="text-white text-lg font-bold tracking-wider mb-1 font-mono group-hover:text-cyan-300 transition-colors">
+                        B.Sc in Computer Science & Engineering
+                      </h3>
+                      <p className="text-orange-300 text-sm font-mono mb-2">
+                        Bangladesh Institute of Science and Technology (BIST)
+                      </p>
+                      <p className="text-slate-300 text-xs leading-relaxed max-w-[600px] bg-[#020617]/50 p-3 rounded backdrop-blur-sm border-l-2 border-orange-500/50 mt-2">
+                        CGPA: 2.77 / 4.00
+                      </p>
+                    </div>
+
+                    <div className="border-l-[3px] border-cyan-500/50 pl-6 relative">
+                      <div className="absolute w-[14px] h-[14px] bg-cyan-950 border-2 border-cyan-400 rounded-full -left-[9px] top-0 shadow-[0_0_15px_rgba(34,211,238,0.8)] z-10 flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 bg-cyan-200 rounded-full animate-pulse"></div>
+                      </div>
+                      <div className="absolute w-6 h-[2px] bg-cyan-500/50 -left-[2px] top-1.5"></div>
+                      <p className="text-cyan-400 text-xs font-bold tracking-widest uppercase mb-1 flex items-center gap-2 font-mono">
+                        <span className="text-orange-400">&gt;</span> 2011 -
+                        2013
+                      </p>
+                      <h3 className="text-white text-lg font-bold tracking-wider mb-1 font-mono group-hover:text-cyan-300 transition-colors">
+                        Higher Secondary Certificate (Science)
+                      </h3>
+                      <p className="text-orange-300 text-sm font-mono mb-2">
+                        Tamirul Millat Kamil Madrasha, Jatrabari, Dhaka
+                      </p>
+                      <p className="text-slate-300 text-xs leading-relaxed max-w-[600px] bg-[#020617]/50 p-3 rounded backdrop-blur-sm border-l-2 border-orange-500/50 mt-2">
+                        GPA: 4.92 / 5.00
+                      </p>
+                    </div>
+
+                    <div className="border-l-[3px] border-cyan-500/50 pl-6 relative">
+                      <div className="absolute w-[14px] h-[14px] bg-cyan-950 border-2 border-cyan-400 rounded-full -left-[9px] top-0 shadow-[0_0_15px_rgba(34,211,238,0.8)] z-10 flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 bg-cyan-200 rounded-full animate-pulse"></div>
+                      </div>
+                      <div className="absolute w-6 h-[2px] bg-cyan-500/50 -left-[2px] top-1.5"></div>
+                      <p className="text-cyan-400 text-xs font-bold tracking-widest uppercase mb-1 flex items-center gap-2 font-mono">
+                        <span className="text-orange-400">&gt;</span> 2009 -
+                        2011
+                      </p>
+                      <h3 className="text-white text-lg font-bold tracking-wider mb-1 font-mono group-hover:text-cyan-300 transition-colors">
+                        Secondary School Certificate (Science)
+                      </h3>
+                      <p className="text-orange-300 text-sm font-mono mb-2">
+                        Muradpur Islamia Alim Madrasha, Jurain, Dhaka
+                      </p>
+                      <p className="text-slate-300 text-xs leading-relaxed max-w-[600px] bg-[#020617]/50 p-3 rounded backdrop-blur-sm border-l-2 border-orange-500/50 mt-2">
+                        GPA: 4.69 / 5.00
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === "services" && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-4 pr-0 sm:pr-0"
+                >
+                  <div className="p-5 border border-cyan-500/30 bg-cyan-950/20 backdrop-blur-sm hover:border-cyan-400/80 transition-all group relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-cyan-500/30 opacity-0 group-hover:opacity-100 transition-all z-10 m-2"></div>
+                    <h3 className="text-cyan-300 text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2 border-b border-cyan-500/30 pb-2 font-mono group-hover:text-white transition-colors">
+                      <span className="text-xl font-sans text-cyan-500 group-hover:text-cyan-300">
+                        {"</>"}
+                      </span>{" "}
+                      Frontend Architecture
+                    </h3>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                      Building robust, scalable, and responsive user interfaces
+                      using React, Next.js, and modern CSS frameworks like
+                      Tailwind. Ensuring cross-browser compatibility and peak
+                      performance.
+                    </p>
+                  </div>
+
+                  <div className="p-5 border border-orange-500/30 bg-orange-950/20 backdrop-blur-sm hover:border-orange-400/80 transition-all group relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-orange-500/30 opacity-0 group-hover:opacity-100 transition-all z-10 m-2"></div>
+                    <h3 className="text-orange-300 text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2 border-b border-orange-500/30 pb-2 font-mono group-hover:text-white transition-colors">
+                      <span className="text-xl font-sans text-orange-500 group-hover:text-orange-300">
+                        {"[DB]"}
+                      </span>{" "}
+                      Backend & API Systems
+                    </h3>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                      Designing secure, fast server-side architectures using
+                      PHP, Laravel, and Node.js. Efficiently managing data flow
+                      with relational (MySQL) and NoSQL (MongoDB) databases.
+                    </p>
+                  </div>
+
+                  <div className="p-5 border border-[#8b5cf6]/30 bg-purple-950/20 backdrop-blur-sm hover:border-[#8b5cf6]/80 transition-all group relative overflow-hidden sm:col-span-2 group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#8b5cf6]/30 opacity-0 group-hover:opacity-100 transition-all z-10 m-2"></div>
+                    <h3 className="text-[#ddd6fe] text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2 border-b border-[#8b5cf6]/30 pb-2 font-mono group-hover:text-white transition-colors">
+                      <span className="text-xl font-sans text-[#8b5cf6] group-hover:text-[#a78bfa]">
+                        {"⚙"}
+                      </span>{" "}
+                      Full-Stack Implementation
+                    </h3>
+                    <p className="text-slate-400 text-xs leading-relaxed max-w-[80%]">
+                      End-to-end development covering the whole lifecycle—from
+                      wireframing to database schema design, API integration,
+                      and final deployment. Bridging the gap between UI
+                      perfection and core logic.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
             </div>
           </div>
         </div>

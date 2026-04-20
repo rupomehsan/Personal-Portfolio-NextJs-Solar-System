@@ -24,8 +24,21 @@ export const Navbar = () => {
       {/* DESKTOP SIDEBAR (Left Navigation) */}
       <div className="hidden md:flex flex-col fixed top-0 left-0 h-screen w-[80px] hover:w-[240px] bg-transparent z-50 transition-all duration-500 ease-in-out overflow-hidden group/sidebar">
         {/* Navigation Links (Centered Vertically) */}
-        <div className="flex-1 w-full flex flex-col items-center group-hover/sidebar:items-start justify-center gap-6 px-4 group-hover/sidebar:px-6">
-          {NAV_LINKS.map((link) => (
+        <div className="flex-1 w-full flex flex-col items-center group-hover/sidebar:items-start justify-center gap-2 px-4 group-hover/sidebar:px-6 relative">
+          
+          {/* PROFESSIONAL TIMELINE/HUB CONNECTOR */}
+          <div className="relative flex flex-col gap-2 w-full">
+            {/* The line itself - mathematically pinned to the centers of the top and bottom icons */}
+            <div className="absolute left-[24px] md:left-[32px] top-[32px] bottom-[32px] w-[2px] -translate-x-1/2 transition-all duration-500 ease-in-out z-0 pointer-events-none hidden md:block">
+              {/* Base wire */}
+              <div className="absolute inset-0 bg-cyan-800/40"></div>
+              {/* Core glowing fiber */}
+              <div className="absolute inset-0 bg-gradient-to-b from-cyan-400 via-teal-300 to-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.8)] filter blur-[0.5px] opacity-70"></div>
+              {/* Traveling energy pulse */}
+              <div className="absolute top-0 w-full h-[50px] bg-white rounded-full mix-blend-screen shadow-[0_0_15px_rgba(255,255,255,1)] animate-[scan_4s_ease-in-out_infinite]"></div>
+            </div>
+
+            {NAV_LINKS.map((link) => (
             <Link
               key={link.title}
               href={link.link}
@@ -55,42 +68,15 @@ export const Navbar = () => {
               </span>
             </Link>
           ))}
+          </div>
 
           {/* Source Code Tab */}
-          <Link
-            href={LINKS.sourceCode}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="relative w-full flex items-center justify-start text-gray-400 hover:text-purple-300 font-mono text-sm tracking-[0.2em] uppercase transition-all duration-300 p-2 mt-4 group/item border border-transparent hover:border-purple-500/50 hover:bg-[#030014]/60 hover:shadow-[inset_0_0_20px_rgba(168,85,247,0.2)] rounded-2xl md:rounded-l-none md:rounded-r-2xl"
-          >
-            {/* Fire Animated Rounded Icon for 2 Letters */}
-            <div className="relative flex items-center justify-center w-12 h-12 rounded-full shrink-0 group-hover/item:scale-110 transition-transform duration-300 border border-purple-500/20 bg-[#030014]/50 overflow-visible">
-              {/* Static Glow */}
-              <div className="absolute inset-0 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.3),inset_0_0_10px_rgba(168,85,247,0.2)] group-hover/item:shadow-[0_0_25px_rgba(168,85,247,0.8),inset_0_0_15px_rgba(168,85,247,0.5)] transition-all duration-300"></div>
-
-              {/* Burn Animation (Flames moving up) - Purple Theme */}
-              <div className="absolute inset-0 rounded-full overflow-hidden mix-blend-screen opacity-50 group-hover/item:opacity-100 transition-opacity duration-300 pointer-events-none">
-                <div className="absolute bottom-[-20%] left-[10%] w-[80%] h-[120%] bg-gradient-to-t from-indigo-700 via-purple-500 to-transparent blur-[4px] flame-1"></div>
-                <div className="absolute bottom-[-10%] left-[20%] w-[60%] h-[100%] bg-gradient-to-t from-purple-500 via-fuchsia-400 to-transparent blur-[3px] flame-2"></div>
-                <div className="absolute bottom-[-30%] left-[30%] w-[40%] h-[140%] bg-gradient-to-t from-fuchsia-300 via-white to-transparent blur-[2px] flame-3"></div>
-              </div>
-
-              <span className="font-black text-purple-400 group-hover/item:text-fuchsia-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)] text-sm tracking-tighter transition-colors z-10">
-                SC
-              </span>
-            </div>
-
-            {/* Full Text (Hidden until hover) */}
-            <span className="opacity-0 -translate-x-4 group-hover/sidebar:opacity-100 group-hover/sidebar:translate-x-4 transition-all duration-300 whitespace-nowrap font-bold text-red-400 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">
-              Source Code
-            </span>
-          </Link>
         </div>
       </div>
 
       {/* MOBILE NAVBAR (Top Horizontal) */}
       <div className="md:hidden w-full h-[70px] fixed top-0 left-0 bg-[#030014]/60 backdrop-blur-md shadow-[0_5px_20px_rgba(6,182,212,0.1)] border-b border-cyan-500/20 z-50 px-6 flex items-center justify-between">
-        <Link href="#about-me" className="flex items-center gap-3">
+        <Link href="#home" className="flex items-center gap-3">
           <div className="relative w-[40px] h-[40px] rounded-full border border-cyan-500/50 overflow-hidden">
             <Image
               src="/logo.png"
@@ -141,15 +127,6 @@ export const Navbar = () => {
                 {link.title}
               </Link>
             ))}
-            <Link
-              href={LINKS.sourceCode}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="w-full text-center text-purple-300 hover:text-purple-200 font-mono text-sm tracking-[0.3em] uppercase py-3 border-b border-purple-500/10 hover:border-purple-500/50 hover:bg-purple-900/20 transition-all duration-300"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Source Code
-            </Link>
 
             {/* Social Icons */}
             <div className="flex justify-center gap-8 mt-6 w-full">
