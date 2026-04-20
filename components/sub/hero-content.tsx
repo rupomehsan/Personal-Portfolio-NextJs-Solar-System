@@ -513,7 +513,7 @@ export const HeroContent = () => {
                 return (
                   <div
                     key={i}
-                    className="absolute inset-0"
+                    className="absolute inset-0 z-10 pointer-events-none"
                     style={{ transform: `rotate(${angle}deg)` }}
                   >
                     {/* Connecting line (From center to the outer perimeter node with corner flow effect) */}
@@ -549,13 +549,13 @@ export const HeroContent = () => {
                         <a
                           href={item.obj.link}
                           style={{ transform: `rotate(-${angle}deg)` }}
-                          className={`relative flex items-center justify-center w-full h-full rounded-full border border-cyan-500/30 bg-[#020617]/70 backdrop-blur-md overflow-hidden transition-all duration-500 ease-out hover:scale-110 ${item.obj.bColor} ${item.obj.shadow} group/btn`}
+                          className={`relative flex items-center justify-center w-full h-full rounded-full border border-cyan-500/30 bg-[#020617]/70 backdrop-blur-md overflow-visible transition-all duration-500 ease-out hover:scale-125 lg:hover:scale-[1.6] pointer-events-auto ${item.obj.bColor} ${item.obj.shadow} group/btn`}
                         >
                           {/* Hover Inner Glow gradient */}
                           <div className="absolute inset-0 bg-gradient-to-tr from-transparent to-white/5 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
 
                           <item.obj.Icon
-                            className={`relative z-10 text-cyan-400/80 transition-all duration-300 ${item.obj.color} drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] group-hover/btn:drop-shadow-[0_0_15px_rgba(255,255,255,0.7)] scale-[1.15] sm:scale-[1.25] group-hover/btn:scale-[1.4]`}
+                            className={`relative z-10 text-cyan-400/80 transition-all duration-300 ${item.obj.color} drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] group-hover/btn:drop-shadow-[0_0_15px_rgba(255,255,255,0.7)] scale-[1.15] sm:scale-[1.25] group-hover/btn:scale-[1.3]`}
                             size={28}
                           />
 
@@ -845,7 +845,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-10 h-10 rounded-full bg-[#000000e8] backdrop-blur-md border border-cyan-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(34,211,238,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-10 h-10 rounded-full bg-[#000000e8] backdrop-blur-md border border-cyan-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(34,211,238,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/mysql/mysql-original.svg"
                     alt="MySQL"
@@ -868,7 +868,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-10 h-10 rounded-full bg-[#000000e8] backdrop-blur-md border border-emerald-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-10 h-10 rounded-full bg-[#000000e8] backdrop-blur-md border border-emerald-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/mongodb/mongodb-original.svg"
                     alt="MongoDB"
@@ -891,7 +891,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-10 h-10 rounded-full bg-[#000000e8] backdrop-blur-md border border-sky-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(56,189,248,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-10 h-10 rounded-full bg-[#000000e8] backdrop-blur-md border border-sky-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(56,189,248,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/postgresql/postgresql-original.svg"
                     alt="PostgreSQL"
@@ -914,7 +914,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-10 h-10 rounded-full bg-[#000000e8] backdrop-blur-md border border-red-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-10 h-10 rounded-full bg-[#000000e8] backdrop-blur-md border border-red-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/redis/redis-original.svg"
                     alt="Redis"
@@ -937,7 +937,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-10 h-10 rounded-full bg-[#000000e8] backdrop-blur-md border border-yellow-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(250,204,21,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-10 h-10 rounded-full bg-[#000000e8] backdrop-blur-md border border-yellow-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(250,204,21,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <Image
                     src="/skills/firebase.png"
                     width={24}
@@ -1077,7 +1077,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-14 h-14 rounded-full bg-[#000000e8] backdrop-blur-md border border-cyan-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(34,211,238,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-14 h-14 rounded-full bg-[#000000e8] backdrop-blur-md border border-cyan-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(34,211,238,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <Image
                     src="/skills/react.png"
                     width={28}
@@ -1102,7 +1102,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-14 h-14 rounded-full bg-[#000000e8] backdrop-blur-md border border-emerald-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-14 h-14 rounded-full bg-[#000000e8] backdrop-blur-md border border-emerald-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/vuejs/vuejs-original.svg"
                     alt="Vue"
@@ -1125,7 +1125,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-14 h-14 rounded-full bg-[#000000e8] backdrop-blur-md border border-orange-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-14 h-14 rounded-full bg-[#000000e8] backdrop-blur-md border border-orange-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <Image
                     src="/skills/html.png"
                     width={28}
@@ -1150,7 +1150,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-14 h-14 rounded-full bg-[#000000e8] backdrop-blur-md border border-blue-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-14 h-14 rounded-full bg-[#000000e8] backdrop-blur-md border border-blue-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <Image
                     src="/skills/css.png"
                     width={28}
@@ -1175,7 +1175,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-14 h-14 rounded-full bg-[#000000e8] backdrop-blur-md border border-white/50 flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-14 h-14 rounded-full bg-[#000000e8] backdrop-blur-md border border-white/50 flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <Image
                     src="/skills/next.png"
                     width={28}
@@ -1317,7 +1317,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-16 h-16 rounded-full bg-[#000000e8] backdrop-blur-md border border-indigo-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(129,140,248,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-16 h-16 rounded-full bg-[#000000e8] backdrop-blur-md border border-indigo-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(129,140,248,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/php/php-original.svg"
                     alt="PHP"
@@ -1340,7 +1340,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-16 h-16 rounded-full bg-[#000000e8] backdrop-blur-md border border-yellow-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(250,204,21,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-16 h-16 rounded-full bg-[#000000e8] backdrop-blur-md border border-yellow-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(250,204,21,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <Image
                     src="/skills/js.png"
                     width={32}
@@ -1365,7 +1365,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-16 h-16 rounded-full bg-[#000000e8] backdrop-blur-md border border-green-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-16 h-16 rounded-full bg-[#000000e8] backdrop-blur-md border border-green-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <Image
                     src="/skills/node.png"
                     width={32}
@@ -1390,7 +1390,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-16 h-16 rounded-full bg-[#000000e8] backdrop-blur-md border border-red-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-16 h-16 rounded-full bg-[#000000e8] backdrop-blur-md border border-red-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/laravel/laravel-original.svg"
                     alt="Laravel"
@@ -1413,7 +1413,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-16 h-16 rounded-full bg-[#000000e8] backdrop-blur-md border border-purple-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-16 h-16 rounded-full bg-[#000000e8] backdrop-blur-md border border-purple-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/kotlin/kotlin-original.svg"
                     alt="Kotlin"
@@ -1579,7 +1579,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-24 h-24 rounded-full bg-[#000000e8] backdrop-blur-md border border-blue-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-24 h-24 rounded-full bg-[#000000e8] backdrop-blur-md border border-blue-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/c/c-original.svg"
                     alt="C"
@@ -1602,7 +1602,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-24 h-24 rounded-full bg-[#000000e8] backdrop-blur-md border border-blue-600/50 flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.6)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-24 h-24 rounded-full bg-[#000000e8] backdrop-blur-md border border-blue-600/50 flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.6)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg"
                     alt="C++"
@@ -1625,7 +1625,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-24 h-24 rounded-full bg-[#000000e8] backdrop-blur-md border border-purple-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-24 h-24 rounded-full bg-[#000000e8] backdrop-blur-md border border-purple-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg"
                     alt="C#"
@@ -1648,7 +1648,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-24 h-24 rounded-full bg-[#000000e8] backdrop-blur-md border border-orange-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(249,115,22,0.6)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-24 h-24 rounded-full bg-[#000000e8] backdrop-blur-md border border-orange-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(249,115,22,0.6)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/java/java-original.svg"
                     alt="Java"
@@ -1671,7 +1671,7 @@ export const HeroContent = () => {
                 }}
                 className="animate-[spin_120s_linear_infinite_reverse]"
               >
-                <div className="pointer-events-auto group w-24 h-24 rounded-full bg-[#000000e8] backdrop-blur-md border border-yellow-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(234,179,8,0.6)] hover:scale-110 transition-all duration-300 cursor-pointer relative">
+                <div className="pointer-events-auto group w-24 h-24 rounded-full bg-[#000000e8] backdrop-blur-md border border-yellow-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(234,179,8,0.6)] hover:scale-110 pointer-events-auto transition-all duration-300 cursor-pointer relative">
                   <img
                     src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg"
                     alt="Python"
