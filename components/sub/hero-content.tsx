@@ -202,35 +202,6 @@ export const HeroContent = () => {
               filter="url(#intenseGlow)"
             />
 
-            {/* Core Endpoints (Sockets) - Left Socket (22), Outer Right Shell (55), Inner Right Core (95) */}
-            <circle
-              cx="22"
-              cy="50"
-              r="2"
-              fill="none"
-              stroke="#06b6d4"
-              strokeWidth="1"
-              className="animate-[ping_2s_linear_infinite]"
-            />
-            <circle
-              cx="55"
-              cy="50"
-              r="2"
-              fill="none"
-              stroke="#8b5cf6"
-              strokeWidth="1"
-              className="animate-[ping_3s_linear_infinite]"
-            />
-            <circle
-              cx="95"
-              cy="50"
-              r="2"
-              fill="none"
-              stroke="#d946ef"
-              strokeWidth="1"
-              className="animate-[ping_2s_linear_infinite]"
-            />
-
             <circle
               cx="22"
               cy="50"
@@ -280,78 +251,6 @@ export const HeroContent = () => {
             </circle>
 
             {/* HIGH SPEED PACKETS */}
-
-            <circle
-              cx="22"
-              cy="50"
-              r="1.5"
-              fill="#e879f9"
-              filter="url(#intenseGlow)"
-            >
-              <animateMotion
-                dur="3s"
-                repeatCount="indefinite"
-                path="M 22 50 L 30 50 L 35 30 L 45 30 L 55 50"
-              />
-            </circle>
-            <rect
-              x="21"
-              y="49"
-              width="3"
-              height="1.5"
-              fill="#22d3ee"
-              filter="url(#intenseGlow)"
-            >
-              <animateMotion
-                dur="3s"
-                begin="1.5s"
-                repeatCount="indefinite"
-                path="M 22 50 L 30 50 L 35 30 L 45 30 L 55 50"
-              />
-            </rect>
-
-            <path
-              d="M 21 49 L 23 50 L 21 51 Z"
-              fill="#22d3ee"
-              filter="url(#intenseGlow)"
-            >
-              <animateMotion
-                dur="4s"
-                begin="0.5s"
-                repeatCount="indefinite"
-                path="M 22 50 L 30 50 L 35 70 L 45 70 L 55 50"
-              />
-            </path>
-            <circle
-              cx="22"
-              cy="50"
-              r="1.2"
-              fill="#8b5cf6"
-              filter="url(#intenseGlow)"
-            >
-              <animateMotion
-                dur="4s"
-                begin="2.5s"
-                repeatCount="indefinite"
-                path="M 22 50 L 30 50 L 35 70 L 45 70 L 55 50"
-              />
-            </circle>
-
-            <rect
-              x="21"
-              y="49"
-              width="2"
-              height="2"
-              fill="#22d3ee"
-              filter="url(#intenseGlow)"
-            >
-              <animateMotion
-                dur="2s"
-                begin="0.2s"
-                repeatCount="indefinite"
-                path="M 22 50 L 95 50"
-              />
-            </rect>
           </g>
           <style>
             {`
@@ -430,85 +329,82 @@ export const HeroContent = () => {
                 {
                   Icon: 7.5,
                   obj: {
+                    title: "GitHub",
                     Icon: FaGithub,
-                    link: "#",
+                    link: "https://github.com",
                     color: "hover:text-white",
                     bColor: "hover:border-white/50",
-                    shadow: "hover:shadow-[0_0_10px_rgba(255,255,255,0.3)]",
+                    shadow: "hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]",
                   },
                 },
                 {
                   Icon: 52.5,
                   obj: {
+                    title: "LinkedIn",
                     Icon: FaLinkedinIn,
-                    link: "#",
+                    link: "https://linkedin.com",
                     color: "hover:text-[#0077b5]",
                     bColor: "hover:border-[#0077b5]/50",
-                    shadow: "hover:shadow-[0_0_10px_rgba(0,119,181,0.3)]",
+                    shadow: "hover:shadow-[0_0_20px_rgba(0,119,181,0.6)]",
                   },
                 },
                 {
                   Icon: 97.5,
                   obj: {
+                    title: "X (Twitter)",
                     Icon: FaXTwitter,
-                    link: "#",
+                    link: "https://x.com",
                     color: "hover:text-white",
                     bColor: "hover:border-white/50",
-                    shadow: "hover:shadow-[0_0_10px_rgba(255,255,255,0.3)]",
+                    shadow: "hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]",
                   },
                 },
                 {
                   Icon: 142.5,
                   obj: {
+                    title: "Discord",
                     Icon: FaDiscord,
-                    link: "#",
+                    link: "https://discord.com",
                     color: "hover:text-[#5865F2]",
                     bColor: "hover:border-[#5865F2]/50",
-                    shadow: "hover:shadow-[0_0_10px_rgba(88,101,242,0.3)]",
+                    shadow: "hover:shadow-[0_0_20px_rgba(88,101,242,0.6)]",
                   },
                 },
                 {
                   Icon: 187.5,
                   obj: {
+                    title: "YouTube",
                     Icon: FaYoutube,
-                    link: "#",
+                    link: "https://youtube.com",
                     color: "hover:text-[#FF0000]",
                     bColor: "hover:border-[#FF0000]/50",
-                    shadow: "hover:shadow-[0_0_10px_rgba(255,0,0,0.3)]",
+                    shadow: "hover:shadow-[0_0_20px_rgba(255,0,0,0.6)]",
                   },
                 },
                 {
                   Icon: 232.5,
                   obj: {
+                    title: "Facebook",
                     Icon: FaFacebook,
-                    link: "#",
+                    link: "https://facebook.com",
                     color: "hover:text-[#1877F2]",
                     bColor: "hover:border-[#1877F2]/50",
-                    shadow: "hover:shadow-[0_0_10px_rgba(24,119,242,0.3)]",
+                    shadow: "hover:shadow-[0_0_20px_rgba(24,119,242,0.6)]",
                   },
                 },
                 {
                   Icon: 277.5,
                   obj: {
+                    title: "Instagram",
                     Icon: FaInstagram,
-                    link: "#",
+                    link: "https://instagram.com",
                     color: "hover:text-[#E1306C]",
                     bColor: "hover:border-[#E1306C]/50",
-                    shadow: "hover:shadow-[0_0_10px_rgba(225,48,108,0.3)]",
+                    shadow: "hover:shadow-[0_0_20px_rgba(225,48,108,0.6)]",
                   },
                 },
-                {
-                  Icon: 322.5,
-                  obj: {
-                    Icon: FaDribbble,
-                    link: "#",
-                    color: "hover:text-[#ea4c89]",
-                    bColor: "hover:border-[#ea4c89]/50",
-                    shadow: "hover:shadow-[0_0_10px_rgba(234,76,137,0.3)]",
-                  },
-                },
-              ].map((item, i) => {
-                const angle = i * 45;
+              ].map((item, i, arr) => {
+                const angle = i * (360 / arr.length);
                 // Icons perfectly trace the absolute perimeter of their container
                 return (
                   <div
@@ -548,20 +444,28 @@ export const HeroContent = () => {
                       <div className="w-full h-full animate-[spin_40s_linear_infinite_reverse]">
                         <a
                           href={item.obj.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={item.obj.title}
                           style={{ transform: `rotate(-${angle}deg)` }}
-                          className={`relative flex items-center justify-center w-full h-full rounded-full border border-cyan-500/30 bg-[#020617]/70 backdrop-blur-md overflow-visible transition-all duration-500 ease-out hover:scale-125 lg:hover:scale-[1.6] pointer-events-auto ${item.obj.bColor} ${item.obj.shadow} group/btn`}
+                          className={`relative flex items-center justify-center w-full h-full rounded-full border border-cyan-500/30 bg-[#020617]/70 backdrop-blur-md overflow-visible transition-all duration-500 ease-out hover:scale-[1.3] lg:hover:scale-[1.8] pointer-events-auto ${item.obj.bColor} ${item.obj.shadow} group/btn`}
                         >
                           {/* Hover Inner Glow gradient */}
-                          <div className="absolute inset-0 bg-gradient-to-tr from-transparent to-white/5 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                          <div className="absolute inset-0 bg-gradient-to-tr from-transparent to-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 rounded-full"></div>
 
                           <item.obj.Icon
-                            className={`relative z-10 text-cyan-400/80 transition-all duration-300 ${item.obj.color} drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] group-hover/btn:drop-shadow-[0_0_15px_rgba(255,255,255,0.7)] scale-[1.15] sm:scale-[1.25] group-hover/btn:scale-[1.3]`}
+                            className={`relative z-10 text-cyan-400/80 transition-all duration-300 ${item.obj.color} drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] group-hover/btn:drop-shadow-[0_0_20px_rgba(255,255,255,0.9)] scale-[1.15] sm:scale-[1.25] group-hover/btn:scale-[1.4]`}
                             size={28}
                           />
 
+                          {/* Hover Title Tooltip */}
+                          <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 opacity-0 group-hover/btn:opacity-100 transition-all duration-300 text-[10px] sm:text-xs font-bold text-white bg-[#020617]/90 px-2 sm:px-3 py-1 rounded-md backdrop-blur-md border border-cyan-500/50 whitespace-nowrap drop-shadow-[0_0_10px_rgba(34,211,238,0.6)] pointer-events-none group-hover/btn:-translate-y-1">
+                            {item.obj.title}
+                          </span>
+
                           {/* Beautiful Under-Glow on icon */}
                           <div
-                            className={`absolute inset-0 -z-0 opacity-0 group-hover/btn:opacity-20 blur-xl transition-opacity duration-500 bg-white`}
+                            className={`absolute inset-0 -z-0 opacity-0 group-hover/btn:opacity-40 blur-xl transition-opacity duration-500 bg-current`}
                           ></div>
                         </a>
                       </div>
