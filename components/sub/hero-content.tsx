@@ -1,6 +1,13 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useMotionValue,
+  useSpring,
+  AnimatePresence,
+} from "framer-motion";
 import Image from "next/image";
 import {
   FaGithub,
@@ -13,7 +20,7 @@ import {
   FaTwitch,
   FaDribbble,
 } from "react-icons/fa6";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   slideInFromLeft,
   slideInFromRight,
@@ -28,6 +35,36 @@ export const HeroContent = () => {
   });
 
   const [glowClicks, setGlowClicks] = useState(0);
+
+  // Role cycling
+  const ROLES = [
+    "PHP · Laravel · MySQL Expert",
+    "React · Vue · Frontend Dev",
+    "Tech Enthusiast",
+  ];
+  const [roleIndex, setRoleIndex] = useState(0);
+  useEffect(() => {
+    const t = setInterval(
+      () => setRoleIndex((p) => (p + 1) % ROLES.length),
+      3200,
+    );
+    return () => clearInterval(t);
+  }, []);
+
+  // 3-D tilt for the profile circle
+  const circleRotX = useMotionValue(0);
+  const circleRotY = useMotionValue(0);
+  const smoothRotX = useSpring(circleRotX, { stiffness: 180, damping: 22 });
+  const smoothRotY = useSpring(circleRotY, { stiffness: 180, damping: 22 });
+  const handleCircleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    circleRotX.set(-((e.clientY - r.top - r.height / 2) / (r.height / 2)) * 13);
+    circleRotY.set(((e.clientX - r.left - r.width / 2) / (r.width / 2)) * 13);
+  };
+  const handleCircleLeave = () => {
+    circleRotX.set(0);
+    circleRotY.set(0);
+  };
 
   // Extremely professional, subtle 3D multi-layered parallax offsets
   const parallaxText = useTransform(scrollYProgress, [0, 1], [0, 150]);
@@ -270,18 +307,22 @@ export const HeroContent = () => {
         className="w-full flex flex-col items-center justify-center xl:justify-center xl:pr-0 h-full sm:h-auto basis-1/2"
       >
         {/* OUTSIDE TOP: Details Section / Name */}
-        <div className="flex flex-col w-full max-w-[500px] items-center z-10 mb-4 sm:mb-20 text-center">
-          <div className="flex items-center gap-2 w-full justify-center">
-            <span className="h-[1px] w-8 bg-cyan-500/50 hidden sm:block"></span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-cyan-300 to-indigo-400 font-mono text-[10px] sm:text-xs tracking-[0.3em] font-bold uppercase drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] animate-pulse">
+        <div className="flex flex-col w-full max-w-[500px] items-center z-10 mb-4 sm:mb-10 text-center">
+          {/* Terminal command badge */}
+
+          {/* SOFTWARE ENGINEER label */}
+          <div className="flex items-center gap-2 w-full justify-center mb-2">
+            <div className="h-px flex-1 max-w-[32px] bg-gradient-to-r from-transparent to-cyan-500/40 hidden sm:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-cyan-300 to-indigo-400 font-mono text-[10px] sm:text-xs tracking-[0.3em] font-bold uppercase drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
               SOFTWARE ENGINEER
             </span>
-            <span className="h-[1px] w-8 bg-cyan-500/50 hidden sm:block"></span>
+            <div className="h-px flex-1 max-w-[32px] bg-gradient-to-l from-transparent to-cyan-500/40 hidden sm:block" />
           </div>
 
-          <h1 className="flex items-center justify-center text-3xl sm:text-4xl lg:text-5xl font-black tracking-wide uppercase leading-tight mt-3 min-h-[1.2em]">
+          {/* Name — typewriter */}
+          <h1 className="flex items-center justify-center text-3xl sm:text-4xl lg:text-5xl font-black tracking-wide uppercase leading-tight mt-2 min-h-[1.2em]">
             <motion.div
-              className="text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.3)] whitespace-nowrap overflow-hidden pr-1"
+              className="text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.4)] whitespace-nowrap overflow-hidden pr-1"
               initial={{ width: "0%" }}
               animate={{ width: "100%" }}
               transition={{
@@ -296,39 +337,226 @@ export const HeroContent = () => {
             </motion.div>
             <motion.span
               animate={{ opacity: [1, 0] }}
-              transition={{
-                repeat: Infinity,
-                duration: 0.8,
-                ease: "linear",
-              }}
+              transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
               className="inline-block w-[4px] md:w-[6px] h-[0.9em] bg-cyan-400 ml-1 shadow-[0_0_15px_rgba(34,211,238,1)]"
             />
           </h1>
+
+          {/* Cycling role subtitle */}
+          <div className="flex items-center justify-center gap-2 mt-2 min-h-[1.8em] font-mono">
+            <span className="text-cyan-600/80 text-sm">{">"}</span>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={roleIndex}
+                initial={{ opacity: 0, y: 7, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -7, filter: "blur(4px)" }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="text-sm text-purple-300/90 tracking-wide"
+              >
+                {ROLES[roleIndex]}
+              </motion.span>
+            </AnimatePresence>
+            <motion.span
+              className="text-purple-400 font-bold"
+              animate={{ opacity: [1, 0] }}
+              transition={{ repeat: Infinity, duration: 0.85 }}
+            >
+              _
+            </motion.span>
+          </div>
         </div>
 
-        {/* CIRCLE CENTER */}
-        <div className="relative w-full max-w-[280px] md:max-w-[360px] lg:max-w-[420px] aspect-square flex flex-col items-center justify-center text-center z-20 group">
-          {/* Main Outer Boundary Rings */}
-          <div className="absolute inset-0 rounded-full border-[2px] border-cyan-500/20 shadow-[0_0_50px_rgba(6,182,212,0.1)] backdrop-blur-sm bg-[#020617]/40 z-0"></div>
-          <div className="absolute inset-[10px] rounded-full border-[1px] border-dashed border-cyan-400/40 opacity-70 group-hover:border-cyan-300 transition-all duration-700 animate-[spin_80s_linear_infinite] z-0"></div>
-          <div className="absolute inset-[25px] rounded-full border-[1px] border-cyan-500/20 opacity-50 z-0"></div>
+        {/* CIRCLE CENTER — Developer HUD Identity · 3D tilt */}
+        <motion.div
+          onMouseMove={handleCircleMove}
+          onMouseLeave={handleCircleLeave}
+          whileHover={{ scale: 1.025 }}
+          transition={{ type: "spring", stiffness: 250, damping: 28 }}
+          style={{
+            rotateX: smoothRotX,
+            rotateY: smoothRotY,
+            transformStyle: "preserve-3d",
+          }}
+          className="relative w-full max-w-[280px] md:max-w-[360px] lg:max-w-[420px] aspect-square flex flex-col items-center justify-center text-center z-20 group"
+        >
+          {/* ── Corner L-Bracket Frame ── */}
+          <div className="absolute top-[4%] left-[4%] w-6 h-6 border-t-[1.5px] border-l-[1.5px] border-cyan-400/75 z-30 pointer-events-none" />
+          <div className="absolute top-[4%] right-[4%] w-6 h-6 border-t-[1.5px] border-r-[1.5px] border-cyan-400/75 z-30 pointer-events-none" />
+          <div className="absolute bottom-[4%] left-[4%] w-6 h-6 border-b-[1.5px] border-l-[1.5px] border-cyan-400/75 z-30 pointer-events-none" />
+          <div className="absolute bottom-[4%] right-[4%] w-6 h-6 border-b-[1.5px] border-r-[1.5px] border-cyan-400/75 z-30 pointer-events-none" />
 
-          <div className="absolute inset-0 bg-gradient-to-b from-cyan-900/5 to-transparent pointer-events-none rounded-full z-0"></div>
+          {/* Corner pulse dots */}
+          <div className="absolute top-[4%] left-[4%] w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.9)] z-30 pointer-events-none animate-pulse" />
+          <div
+            className="absolute top-[4%] right-[4%] w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.9)] z-30 pointer-events-none animate-pulse"
+            style={{ animationDelay: "0.5s" }}
+          />
+          <div
+            className="absolute bottom-[4%] left-[4%] w-1 h-1 rounded-full bg-purple-400 shadow-[0_0_6px_rgba(167,139,250,0.9)] z-30 pointer-events-none animate-pulse"
+            style={{ animationDelay: "1s" }}
+          />
+          <div
+            className="absolute bottom-[4%] right-[4%] w-1 h-1 rounded-full bg-purple-400 shadow-[0_0_6px_rgba(167,139,250,0.9)] z-30 pointer-events-none animate-pulse"
+            style={{ animationDelay: "1.5s" }}
+          />
 
-          {/* Profile Image Wrapper with Orbiting Socials */}
-          <div className="relative w-[120px] h-[120px] sm:w-[160px] sm:h-[160px] lg:w-[200px] lg:h-[200px] flex-shrink-0 z-10 flex items-center justify-center">
-            {/* Inner orbit boundary to anchor image */}
+          {/* ── SVG HUD Ring: tick marks + cardinal diamonds ── */}
+          <div className="absolute inset-0 z-10 pointer-events-none">
+            <svg viewBox="0 0 200 200" className="w-full h-full">
+              <defs>
+                <filter
+                  id="hud-ring-glow"
+                  x="-30%"
+                  y="-30%"
+                  width="160%"
+                  height="160%"
+                >
+                  <feGaussianBlur stdDeviation="1" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
+              {/* Outer boundary ring */}
+              <circle
+                cx="100"
+                cy="100"
+                r="95"
+                fill="none"
+                stroke="rgba(6,182,212,0.13)"
+                strokeWidth="1"
+              />
+
+              {/* Fine tick marks every 10° */}
+              {Array.from({ length: 36 }).map((_, i) => {
+                const angle = ((i * 10 - 90) * Math.PI) / 180;
+                const major = i % 3 === 0;
+                const r1 = major ? 88 : 91;
+                const x1 = 100 + r1 * Math.cos(angle);
+                const y1 = 100 + r1 * Math.sin(angle);
+                const x2 = 100 + 95 * Math.cos(angle);
+                const y2 = 100 + 95 * Math.sin(angle);
+                return (
+                  <line
+                    key={i}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke={
+                      major ? "rgba(34,211,238,0.5)" : "rgba(34,211,238,0.18)"
+                    }
+                    strokeWidth={major ? "1.4" : "0.6"}
+                  />
+                );
+              })}
+
+              {/* Cardinal diamonds at N / E / S / W */}
+              {[0, 90, 180, 270].map((deg, i) => {
+                const a = ((deg - 90) * Math.PI) / 180;
+                const cx = 100 + 95 * Math.cos(a);
+                const cy = 100 + 95 * Math.sin(a);
+                return (
+                  <polygon
+                    key={i}
+                    points={`${cx},${cy - 4.5} ${cx + 3},${cy} ${cx},${cy + 4.5} ${cx - 3},${cy}`}
+                    fill="#22d3ee"
+                    filter="url(#hud-ring-glow)"
+                    opacity="0.9"
+                  />
+                );
+              })}
+
+              {/* Inner dashed guide ring */}
+              <circle
+                cx="100"
+                cy="100"
+                r="79"
+                fill="none"
+                stroke="rgba(6,182,212,0.07)"
+                strokeWidth="0.5"
+                strokeDasharray="3 6"
+              />
+            </svg>
+          </div>
+
+          {/* ── Slowly Spinning Dashed Middle Ring ── */}
+          <div className="absolute inset-[12px] rounded-full border border-dashed border-cyan-400/18 group-hover:border-cyan-300/30 transition-all duration-700 animate-[spin_100s_linear_infinite] z-10 pointer-events-none" />
+
+          {/* ── Ambient background glow ── */}
+          <div className="absolute inset-0 bg-gradient-to-b from-cyan-900/5 to-transparent pointer-events-none rounded-full z-0" />
+
+          {/* ── HUD Status: Top ── */}
+          <div className="absolute top-[5%] left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 pointer-events-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.9)] animate-pulse" />
+            <span className="text-[7px] sm:text-[8px] font-mono text-green-400/80 tracking-[0.25em] uppercase">
+              SYS_ONLINE
+            </span>
+          </div>
+
+          {/* ── HUD Status: Bottom ── */}
+          <div className="absolute bottom-[5%] left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+            <span className="text-[7px] sm:text-[8px] font-mono text-cyan-500/55 tracking-[0.2em] uppercase select-none">
+              &lt; FULL_STACK /&gt;
+            </span>
+          </div>
+
+          {/* ── Floating mini tech chips at 45° corners ── */}
+          <div className="absolute top-[13%] right-[9%] z-30 pointer-events-none hidden lg:flex items-center gap-1 bg-[#020617]/85 border border-cyan-500/25 backdrop-blur-sm px-2 py-[3px] rounded-sm">
+            <span className="w-[5px] h-[5px] rounded-full bg-cyan-400/90 animate-pulse" />
+            <span className="text-[7px] font-mono text-cyan-400/70 tracking-wider">
+              Vue · React
+            </span>
+          </div>
+          <div className="absolute bottom-[13%] right-[9%] z-30 pointer-events-none hidden lg:flex items-center gap-1 bg-[#020617]/85 border border-purple-500/25 backdrop-blur-sm px-2 py-[3px] rounded-sm">
+            <span
+              className="w-[5px] h-[5px] rounded-full bg-purple-400/90 animate-pulse"
+              style={{ animationDelay: "0.7s" }}
+            />
+            <span className="text-[7px] font-mono text-purple-400/70 tracking-wider">
+              Laravel
+            </span>
+          </div>
+          <div className="absolute bottom-[13%] left-[9%] z-30 pointer-events-none hidden lg:flex items-center gap-1 bg-[#020617]/85 border border-emerald-500/25 backdrop-blur-sm px-2 py-[3px] rounded-sm">
+            <span
+              className="w-[5px] h-[5px] rounded-full bg-emerald-400/90 animate-pulse"
+              style={{ animationDelay: "1.3s" }}
+            />
+            <span className="text-[7px] font-mono text-emerald-400/70 tracking-wider">
+              MySQL
+            </span>
+          </div>
+          <div className="absolute top-[13%] left-[9%] z-30 pointer-events-none hidden lg:flex items-center gap-1 bg-[#020617]/85 border border-yellow-500/25 backdrop-blur-sm px-2 py-[3px] rounded-sm">
+            <span
+              className="w-[5px] h-[5px] rounded-full bg-yellow-400/90 animate-pulse"
+              style={{ animationDelay: "0.4s" }}
+            />
+            <span className="text-[7px] font-mono text-yellow-400/70 tracking-wider">
+              JS · PHP
+            </span>
+          </div>
+
+          {/* ── Profile Image Wrapper with Orbiting Socials ── */}
+          {/* translateZ lifts the core forward for a 3-D pop effect */}
+          <motion.div
+            style={{ translateZ: 35 }}
+            className="relative w-[120px] h-[120px] sm:w-[160px] sm:h-[160px] lg:w-[200px] lg:h-[200px] flex-shrink-0 z-10 flex items-center justify-center"
+          >
+            {/* Inner orbit anchor ring */}
             <div className="absolute inset-[-20px] sm:inset-[-30px] lg:inset-[-40px] rounded-full border-[1px] border-cyan-500/30"></div>
 
-            {/* Social Orbit Rings Array */}
+            {/* Orbit track rings */}
             <div className="absolute inset-[-70px] sm:inset-[-95px] lg:inset-[-115px] rounded-full border-[1px] border-dashed border-cyan-500/30 animate-[spin_60s_linear_infinite]"></div>
             <div className="absolute inset-[-70px] sm:inset-[-95px] lg:inset-[-115px] rounded-full border-[1px] border-cyan-500/10"></div>
 
+            {/* Orbiting Social Icons */}
             <div className="absolute inset-[-70px] sm:inset-[-95px] lg:inset-[-115px] rounded-full animate-[spin_40s_linear_infinite]">
-              {[
-                {
-                  Icon: 7.5,
-                  obj: {
+              {(
+                [
+                  {
                     title: "GitHub",
                     Icon: FaGithub,
                     link: "https://github.com",
@@ -336,10 +564,7 @@ export const HeroContent = () => {
                     bColor: "hover:border-white/50",
                     shadow: "hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]",
                   },
-                },
-                {
-                  Icon: 52.5,
-                  obj: {
+                  {
                     title: "LinkedIn",
                     Icon: FaLinkedinIn,
                     link: "https://linkedin.com",
@@ -347,21 +572,15 @@ export const HeroContent = () => {
                     bColor: "hover:border-[#0077b5]/50",
                     shadow: "hover:shadow-[0_0_20px_rgba(0,119,181,0.6)]",
                   },
-                },
-                {
-                  Icon: 97.5,
-                  obj: {
-                    title: "X (Twitter)",
+                  {
+                    title: "X",
                     Icon: FaXTwitter,
                     link: "https://x.com",
                     color: "hover:text-white",
                     bColor: "hover:border-white/50",
                     shadow: "hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]",
                   },
-                },
-                {
-                  Icon: 142.5,
-                  obj: {
+                  {
                     title: "Discord",
                     Icon: FaDiscord,
                     link: "https://discord.com",
@@ -369,10 +588,7 @@ export const HeroContent = () => {
                     bColor: "hover:border-[#5865F2]/50",
                     shadow: "hover:shadow-[0_0_20px_rgba(88,101,242,0.6)]",
                   },
-                },
-                {
-                  Icon: 187.5,
-                  obj: {
+                  {
                     title: "YouTube",
                     Icon: FaYoutube,
                     link: "https://youtube.com",
@@ -380,10 +596,7 @@ export const HeroContent = () => {
                     bColor: "hover:border-[#FF0000]/50",
                     shadow: "hover:shadow-[0_0_20px_rgba(255,0,0,0.6)]",
                   },
-                },
-                {
-                  Icon: 232.5,
-                  obj: {
+                  {
                     title: "Facebook",
                     Icon: FaFacebook,
                     link: "https://facebook.com",
@@ -391,10 +604,7 @@ export const HeroContent = () => {
                     bColor: "hover:border-[#1877F2]/50",
                     shadow: "hover:shadow-[0_0_20px_rgba(24,119,242,0.6)]",
                   },
-                },
-                {
-                  Icon: 277.5,
-                  obj: {
+                  {
                     title: "Instagram",
                     Icon: FaInstagram,
                     link: "https://instagram.com",
@@ -402,17 +612,16 @@ export const HeroContent = () => {
                     bColor: "hover:border-[#E1306C]/50",
                     shadow: "hover:shadow-[0_0_20px_rgba(225,48,108,0.6)]",
                   },
-                },
-              ].map((item, i, arr) => {
+                ] as const
+              ).map((item, i, arr) => {
                 const angle = i * (360 / arr.length);
-                // Icons perfectly trace the absolute perimeter of their container
                 return (
                   <div
                     key={i}
                     className="absolute inset-0 z-10 pointer-events-none"
                     style={{ transform: `rotate(${angle}deg)` }}
                   >
-                    {/* Connecting line (From center to the outer perimeter node with corner flow effect) */}
+                    {/* Connector line from center to icon node */}
                     <div className="absolute inset-0 hidden sm:block z-0 pointer-events-none">
                       <svg
                         viewBox="0 0 100 100"
@@ -420,8 +629,6 @@ export const HeroContent = () => {
                         className="w-full h-full overflow-visible opacity-50"
                       >
                         <g className="animate-[pulse_4.2s_ease-in-out_infinite]">
-                          {/* We draw a line from center (50,50) up to the node (50,0). With a corner offset. 
-                              Since each container is rotated by angle, "up" is always towards the node. */}
                           <path
                             d="M 50 50 L 45 45 L 45 10 L 50 0"
                             fill="none"
@@ -439,34 +646,26 @@ export const HeroContent = () => {
                         </g>
                       </svg>
                     </div>
-                    {/* The Icon Node exactly tracking the edge */}
+                    {/* Icon node */}
                     <div className="absolute top-0 left-1/2 w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16 -mt-5 -ml-5 sm:-mt-7 sm:-ml-7 lg:-mt-8 lg:-ml-8 z-20">
                       <div className="w-full h-full animate-[spin_40s_linear_infinite_reverse]">
                         <a
-                          href={item.obj.link}
+                          href={item.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          title={item.obj.title}
+                          title={item.title}
                           style={{ transform: `rotate(-${angle}deg)` }}
-                          className={`relative flex items-center justify-center w-full h-full rounded-full border border-cyan-500/30 bg-[#020617]/70 backdrop-blur-md overflow-visible transition-all duration-500 ease-out hover:scale-[1.3] lg:hover:scale-[1.8] pointer-events-auto ${item.obj.bColor} ${item.obj.shadow} group/btn`}
+                          className={`relative flex items-center justify-center w-full h-full rounded-full border border-cyan-500/30 bg-[#020617]/70 backdrop-blur-md overflow-visible transition-all duration-500 ease-out hover:scale-[1.3] lg:hover:scale-[1.8] pointer-events-auto ${item.bColor} ${item.shadow} group/btn`}
                         >
-                          {/* Hover Inner Glow gradient */}
                           <div className="absolute inset-0 bg-gradient-to-tr from-transparent to-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 rounded-full"></div>
-
-                          <item.obj.Icon
-                            className={`relative z-10 text-cyan-400/80 transition-all duration-300 ${item.obj.color} drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] group-hover/btn:drop-shadow-[0_0_20px_rgba(255,255,255,0.9)] scale-[1.15] sm:scale-[1.25] group-hover/btn:scale-[1.4]`}
+                          <item.Icon
+                            className={`relative z-10 text-cyan-400/80 transition-all duration-300 ${item.color} drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] group-hover/btn:drop-shadow-[0_0_20px_rgba(255,255,255,0.9)] scale-[1.15] sm:scale-[1.25] group-hover/btn:scale-[1.4]`}
                             size={28}
                           />
-
-                          {/* Hover Title Tooltip */}
                           <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 opacity-0 group-hover/btn:opacity-100 transition-all duration-300 text-[10px] sm:text-xs font-bold text-white bg-[#020617]/90 px-2 sm:px-3 py-1 rounded-md backdrop-blur-md border border-cyan-500/50 whitespace-nowrap drop-shadow-[0_0_10px_rgba(34,211,238,0.6)] pointer-events-none group-hover/btn:-translate-y-1">
-                            {item.obj.title}
+                            {item.title}
                           </span>
-
-                          {/* Beautiful Under-Glow on icon */}
-                          <div
-                            className={`absolute inset-0 -z-0 opacity-0 group-hover/btn:opacity-40 blur-xl transition-opacity duration-500 bg-current`}
-                          ></div>
+                          <div className="absolute inset-0 -z-0 opacity-0 group-hover/btn:opacity-40 blur-xl transition-opacity duration-500 bg-current"></div>
                         </a>
                       </div>
                     </div>
@@ -475,12 +674,12 @@ export const HeroContent = () => {
               })}
             </div>
 
-            {/* Inner Circular Lines */}
+            {/* Inner spinning rings */}
             <div className="absolute inset-[-10px] sm:inset-[-15px] rounded-full border-2 border-cyan-500/40 animate-[spin_10s_linear_infinite] shadow-[0_0_15px_rgba(34,211,238,0.1)]"></div>
             <div className="absolute inset-[-20px] sm:inset-[-25px] rounded-full border-[1px] border-dashed border-cyan-400/60 animate-[spin_15s_linear_infinite_reverse]"></div>
 
-            {/* Core Image */}
-            <div className="relative w-full h-full rounded-full overflow-hidden border border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.3)] bg-[#000510] ring-2 ring-cyan-500/10 group-hover:ring-cyan-400/30 transition-all duration-300 transform group-hover:scale-105">
+            {/* ── Core Profile Image with HUD overlay ── */}
+            <div className="relative w-full h-full rounded-full overflow-hidden border border-cyan-500/50 shadow-[0_0_28px_rgba(6,182,212,0.35)] bg-[#000510] ring-2 ring-cyan-500/10 group-hover:ring-cyan-400/30 transition-all duration-300 transform group-hover:scale-105">
               <Image
                 src="/banner-img.png"
                 alt="MD Shefat / Profile"
@@ -490,67 +689,160 @@ export const HeroContent = () => {
                 priority
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-cyan-900/20 to-transparent opacity-60"></div>
+
+              {/* Animated HUD scan line */}
+              <div className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+                <motion.div
+                  animate={{ y: ["-100%", "210%"] }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "linear",
+                    repeatDelay: 2,
+                  }}
+                  className="w-full h-[28%] bg-gradient-to-b from-transparent via-cyan-400/12 to-transparent"
+                />
+              </div>
+
+              {/* Reticle corner brackets inside image */}
+              <div className="absolute top-[11%] left-[11%] w-4 h-4 border-t border-l border-cyan-400/60 pointer-events-none" />
+              <div className="absolute top-[11%] right-[11%] w-4 h-4 border-t border-r border-cyan-400/60 pointer-events-none" />
+              <div className="absolute bottom-[11%] left-[11%] w-4 h-4 border-b border-l border-cyan-400/60 pointer-events-none" />
+              <div className="absolute bottom-[11%] right-[11%] w-4 h-4 border-b border-r border-cyan-400/60 pointer-events-none" />
+
+              {/* Center lock dot */}
+              <div className="absolute bottom-[17%] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-cyan-400/70 shadow-[0_0_5px_rgba(34,211,238,0.9)] pointer-events-none" />
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        {/* OUTSIDE BOTTOM: Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-[500px] mt-6 sm:mt-20 z-10 relative">
-          <button className="relative w-full sm:w-auto px-8 py-3 rounded-full overflow-hidden group/hire border border-cyan-500/50 bg-cyan-950/20 hover:bg-cyan-500/10 transition-all duration-300">
-            <div className="absolute inset-0 bg-cyan-500/20 translate-y-[100%] group-hover/hire:translate-y-[0%] transition-transform duration-300 ease-in-out"></div>
-            <span className="relative flex items-center justify-center gap-2 text-cyan-300 font-bold tracking-widest uppercase text-[12px] sm:text-sm group-hover/hire:text-cyan-100 transition-colors drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5 group-hover/hire:animate-pulse"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
-                />
-              </svg>
-              Hire Me
-            </span>
-          </button>
+        {/* OUTSIDE BOTTOM: Action Buttons + Badge */}
+        <div className="flex flex-col items-center mt-5 sm:mt-10 z-10 w-full max-w-[500px] gap-4">
+          {/* ── Angular Cyberpunk Buttons ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full"
+          >
+            {/* Hire Me */}
+            <motion.button
+              whileHover={{
+                boxShadow:
+                  "0 0 28px rgba(6,182,212,0.35), inset 0 0 20px rgba(6,182,212,0.07)",
+              }}
+              whileTap={{ scale: 0.96 }}
+              className="group/hire relative w-full sm:w-auto px-8 py-3 overflow-hidden bg-[#020617]/55 backdrop-blur-sm border border-cyan-500/45"
+              style={{
+                clipPath:
+                  "polygon(12px 0%,100% 0%,100% calc(100% - 12px),calc(100% - 12px) 100%,0% 100%,0% 12px)",
+              }}
+            >
+              {/* Fill sweep */}
+              <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/18 to-transparent translate-y-full group-hover/hire:translate-y-0 transition-transform duration-300 ease-out" />
+              {/* Shimmer */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/hire:translate-x-full transition-transform duration-600" />
+              {/* Cut-corner accent */}
+              <div className="absolute top-0 left-0 w-3 h-3 bg-cyan-400/25 group-hover/hire:bg-cyan-400/50 transition-colors duration-300" />
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-cyan-400/25 group-hover/hire:bg-cyan-400/50 transition-colors duration-300" />
+              <span className="relative z-10 flex items-center justify-center gap-2.5 text-cyan-300 font-mono font-bold tracking-[0.12em] uppercase text-sm group-hover/hire:text-white transition-colors duration-250 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-4 h-4 group-hover/hire:animate-pulse shrink-0"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+                  />
+                </svg>
+                Hire Me
+              </span>
+            </motion.button>
 
-          <button className="relative w-full sm:w-auto px-8 py-3 rounded-full overflow-hidden group/cv border border-indigo-500/50 bg-indigo-950/20 hover:bg-indigo-500/10 transition-all duration-300">
-            <div className="absolute inset-0 bg-indigo-500/20 translate-y-[100%] group-hover/cv:translate-y-[0%] transition-transform duration-300 ease-in-out"></div>
-            <span className="relative flex items-center justify-center gap-2 text-indigo-300 font-bold tracking-widest uppercase text-[12px] sm:text-sm group-hover/cv:text-indigo-100 transition-colors drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5 group-hover/cv:-translate-y-1 transition-transform"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-                />
-              </svg>
-              Download CV
-            </span>
-          </button>
-        </div>
-        {/* Status Badge */}
-        <div className="mt-5 flex items-center justify-center gap-3 font-mono relative group cursor-pointer hover:scale-105 transition-transform duration-300">
-          {/* Outer glowing border effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-purple-500 to-indigo-500 rounded-full blur opacity-40 group-hover:opacity-100 transition duration-500 animate-pulse"></div>
-          <div className="relative flex items-center justify-center gap-2 bg-[#020617]/80 border border-cyan-500/50 px-5 py-2 rounded-full overflow-hidden backdrop-blur-md w-full sm:w-auto">
-            {/* Shine sweep animation */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out"></div>
+            {/* Download CV */}
+            <motion.button
+              whileHover={{
+                boxShadow:
+                  "0 0 28px rgba(99,102,241,0.35), inset 0 0 20px rgba(99,102,241,0.07)",
+              }}
+              whileTap={{ scale: 0.96 }}
+              className="group/cv relative w-full sm:w-auto px-8 py-3 overflow-hidden bg-[#020617]/55 backdrop-blur-sm border border-indigo-500/45"
+              style={{
+                clipPath:
+                  "polygon(0% 0%,calc(100% - 12px) 0%,100% 12px,100% 100%,12px 100%,0% calc(100% - 12px))",
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-indigo-500/18 to-transparent translate-y-full group-hover/cv:translate-y-0 transition-transform duration-300 ease-out" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/cv:translate-x-full transition-transform duration-600" />
+              <div className="absolute top-0 right-0 w-3 h-3 bg-indigo-400/25 group-hover/cv:bg-indigo-400/50 transition-colors duration-300" />
+              <div className="absolute bottom-0 left-0 w-3 h-3 bg-indigo-400/25 group-hover/cv:bg-indigo-400/50 transition-colors duration-300" />
+              <span className="relative z-10 flex items-center justify-center gap-2.5 text-indigo-300 font-mono font-bold tracking-[0.12em] uppercase text-sm group-hover/cv:text-white transition-colors duration-250 drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-4 h-4 group-hover/cv:-translate-y-0.5 transition-transform duration-250 shrink-0"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                  />
+                </svg>
+                Download CV
+              </span>
+            </motion.button>
+          </motion.div>
 
-            <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_cyan] animate-ping shrink-0 hidden sm:block"></div>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-100 to-cyan-300 text-xs sm:text-sm uppercase tracking-[0.2em] font-bold">
-              Web Full Stack Developer
-            </span>
-          </div>
+          {/* ── Enhanced Status Badge ── */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              delay: 0.65,
+              type: "spring",
+              stiffness: 200,
+              damping: 20,
+            }}
+            className="relative group cursor-pointer hover:scale-[1.03] transition-transform duration-300 w-full sm:w-auto"
+          >
+            {/* Outer glow */}
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/28 via-purple-500/28 to-indigo-500/28 rounded-full blur-md opacity-60 group-hover:opacity-100 group-hover:blur-lg transition-all duration-500 animate-pulse" />
+
+            <div className="relative flex items-center justify-center gap-3 bg-[#020617]/85 border border-cyan-500/30 px-5 sm:px-6 py-2.5 rounded-full backdrop-blur-md overflow-hidden">
+              {/* Shimmer sweep */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/12 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+
+              {/* Ping dot */}
+              <div className="relative w-2 h-2 shrink-0 hidden sm:block">
+                <div className="absolute inset-0 rounded-full bg-cyan-400 animate-ping opacity-70" />
+                <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)]" />
+              </div>
+
+              <div className="flex flex-col items-center sm:items-start gap-0">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-100 to-cyan-300 text-xs sm:text-sm uppercase tracking-[0.2em] font-bold font-mono leading-tight">
+                  Web Full Stack Developer
+                </span>
+                <span className="text-[8px] text-gray-500 font-mono tracking-[0.12em] mt-0.5 hidden sm:block">
+                  PHP · Laravel · Vue · React · MySQL
+                </span>
+              </div>
+
+              {/* Right decorative line stack */}
+              <div className="hidden sm:flex flex-col gap-[3px] shrink-0 ml-1">
+                <div className="w-8 h-[2px] rounded-full bg-gradient-to-r from-cyan-400/75 to-transparent" />
+                <div className="w-5 h-[2px] rounded-full bg-gradient-to-r from-purple-400/75 to-transparent" />
+                <div className="w-3 h-[2px] rounded-full bg-gradient-to-r from-indigo-400/75 to-transparent" />
+              </div>
+            </div>
+          </motion.div>
         </div>
       </motion.div>
 

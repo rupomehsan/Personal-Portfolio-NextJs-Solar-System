@@ -161,43 +161,70 @@ export const AboutContent = () => {
       {/* --- HUD ELEMENTS --- */}
 
       {/* 1. DATA SCANNING GRID (Top-Left) */}
-      <div className="absolute top-8 left-8 lg:top-[12%] lg:left-[8%] w-48 h-32 border border-cyan-500/30 bg-[#020617]/50 backdrop-blur-sm p-3 hidden xl:flex flex-col z-10 overflow-hidden shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+      <div className="absolute top-6 left-6 lg:top-[8%] lg:left-[6%] w-[210px] border border-cyan-500/30 bg-[#020617]/60 backdrop-blur-sm p-4 hidden xl:flex flex-col z-10 overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.12)]">
         {/* Animated scanning line */}
         <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400/80 shadow-[0_0_10px_rgba(34,211,238,1)] animate-[scan_3s_linear_infinite]"></div>
-
         {/* Grid Background */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(6, 182, 212, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.1) 1px, transparent 1px)",
+              "linear-gradient(rgba(6, 182, 212, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.07) 1px, transparent 1px)",
             backgroundSize: "12px 12px",
           }}
         ></div>
-
         <div className="relative z-10">
-          <p className="text-cyan-400 text-[10px] font-bold mb-1 tracking-widest uppercase">
-            COORD
+          <p className="text-cyan-400 text-[9px] font-bold mb-3 tracking-widest uppercase flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+            SYS::PROFILE
           </p>
-          <div className="text-cyan-200/60 text-[8px] leading-relaxed font-mono">
-            0x03587133 <br />
-            6103.4150517289 <br />
-            04045.5214087344 <br />
-            wG4BvVLe47qXYaNCD
+          <div className="flex flex-col gap-3">
+            {/* Stat 1 */}
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-cyan-300 text-[26px] font-black leading-none">
+                  5+
+                </span>
+                <span className="text-cyan-500/70 text-[8px] tracking-widest uppercase font-bold">
+                  Yrs Exp
+                </span>
+              </div>
+              <div className="w-full h-[2px] mt-1 bg-cyan-900/50">
+                <div className="h-full w-[88%] bg-cyan-400/80 shadow-[0_0_6px_rgba(34,211,238,0.9)]"></div>
+              </div>
+            </div>
+            <div className="w-full h-[1px] bg-cyan-500/10"></div>
+            {/* Stat 2 */}
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-orange-400 text-[26px] font-black leading-none">
+                  200+
+                </span>
+                <span className="text-orange-500/70 text-[8px] tracking-widest uppercase font-bold">
+                  Projects
+                </span>
+              </div>
+              <div className="w-full h-[2px] mt-1 bg-orange-900/50">
+                <div className="h-full w-[95%] bg-orange-400/80 shadow-[0_0_6px_rgba(249,115,22,0.9)]"></div>
+              </div>
+            </div>
+            <div className="w-full h-[1px] bg-cyan-500/10"></div>
+            {/* Stat 3 */}
           </div>
-          <p className="text-cyan-400 text-[10px] font-bold mt-3 mb-1 tracking-widest uppercase animate-pulse">
-            DATA SCANNING
-          </p>
-          <div className="text-cyan-200/60 text-[8px] leading-relaxed font-mono">
-            xyDt98IRzw0feV0qO <br />
-            RazSWLfOvRdGdoVXx <br />
-            3DPlCbsnTJVmjdpTr
+          <div className="mt-3 pt-2.5 border-t border-cyan-500/15 flex items-center justify-between">
+            <p className="text-[8px] tracking-widest uppercase flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+              <span className="text-green-400/80">STATUS: ONLINE</span>
+            </p>
+            <span className="text-[7px] text-cyan-500/40 font-mono">
+              v2.5.1
+            </span>
           </div>
         </div>
       </div>
 
       {/* 2. MIDDLE LEFT RADAR */}
-      <div className="absolute top-[45%] left-[-20px] lg:left-[5%] -translate-y-1/2 w-[220px] h-[220px] hidden lg:flex items-center justify-center opacity-80 z-0">
+      <div className="absolute top-[50%] left-[-20px] lg:left-[5%] -translate-y-1/2 w-[220px] h-[220px] hidden lg:flex items-center justify-center opacity-80 z-0">
         <div className="absolute inset-0 rounded-full border border-cyan-500/20"></div>
         <div className="absolute inset-[15px] rounded-full border border-dashed border-cyan-500/40 animate-[spin_20s_linear_infinite]"></div>
         <div className="absolute inset-[35px] rounded-full border-[2px] border-cyan-400/20 border-l-cyan-400 animate-[spin_10s_linear_infinite_reverse]"></div>
@@ -245,37 +272,13 @@ export const AboutContent = () => {
         <div className="absolute -bottom-2 -left-2 -right-2 h-[15px] border-b-[1px] border-cyan-400/30 rounded-b-[50%]"></div>
       </div>
 
-      {/* 4. MASSIVE RIGHT IRIS RING */}
-      <div className="absolute top-[10%] right-[-30%] sm:right-[-15%] lg:right-[0%] w-[400px] lg:w-[600px] h-[400px] lg:h-[600px] flex items-center justify-center opacity-30 lg:opacity-50 pointer-events-none z-0">
-        <div className="absolute inset-0 rounded-full border-[2px] border-dashed border-cyan-500/40 animate-[spin_60s_linear_infinite]"></div>
-        <div className="absolute inset-[30px] rounded-full border-[15px] border-l-transparent border-cyan-800/40 animate-[spin_40s_linear_infinite_reverse]"></div>
-        <div className="absolute inset-[60px] rounded-full border-[4px] border-cyan-500/20"></div>
-        <div className="absolute inset-[80px] rounded-full border-[1px] border-dashed border-cyan-300/50 animate-[spin_30s_linear_infinite]"></div>
-        <div className="absolute inset-[130px] rounded-full border-[25px] border-t-cyan-500/30 border-r-cyan-500/30 border-b-transparent border-l-transparent animate-[spin_20s_linear_infinite]"></div>
-        <div className="absolute inset-[130px] rounded-full border-[2px] border-cyan-400/50"></div>
-
-        {/* Center Core */}
-        <div className="absolute inset-[180px] rounded-full bg-[#020617]/50 backdrop-blur-sm border border-cyan-400/50 flex items-center justify-center shadow-[inset_0_0_50px_rgba(6,182,212,0.3)]">
-          <div className="w-[40%] h-[40%] rounded-full bg-cyan-400/30 blur-md animate-pulse"></div>
-          <div className="absolute w-[15%] h-[15%] rounded-full bg-slate-200 shadow-[0_0_20px_rgba(255,255,255,1)]"></div>
-        </div>
-
-        {/* HUD Ring Metrics */}
-        <div className="absolute top-[22%] right-[12%] bg-[#020617] border border-cyan-500/60 px-2 py-0.5 text-[10px] text-cyan-300 rotate-[12deg] tracking-widest">
-          345°
-        </div>
-        <div className="absolute bottom-[22%] right-[16%] bg-[#020617] border border-cyan-500/60 px-2 py-0.5 text-[10px] text-cyan-300 -rotate-[12deg] tracking-widest">
-          85v
-        </div>
-      </div>
-
       {/* --- CENTRAL MAIN PANEL --- */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-        className="relative w-full max-w-[900px] z-20 xl:ml-auto xl:mr-[4%] 2xl:mr-[8%] flex flex-col items-center xl:items-end"
+        className="relative w-full max-w-[1000px] z-20 xl:ml-auto flex flex-col items-center xl:items-end"
       >
         {/* TABS OUTSIDE THE CARD */}
         <div className="flex flex-row justify-center sm:justify-start gap-2 sm:gap-4 mb-4 relative z-30 w-full xl:w-auto">
@@ -319,6 +322,20 @@ export const AboutContent = () => {
                 "polygon(0 25px, 25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%)",
             }}
           >
+            {/* IRIS RING — Card Background Decoration */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] lg:w-[720px] lg:h-[720px] flex items-center justify-center opacity-25 pointer-events-none z-0">
+              <div className="absolute inset-0 rounded-full border-[2px] border-dashed border-cyan-500/40 animate-[spin_60s_linear_infinite]"></div>
+              <div className="absolute inset-[30px] rounded-full border-[15px] border-l-transparent border-cyan-800/40 animate-[spin_40s_linear_infinite_reverse]"></div>
+              <div className="absolute inset-[60px] rounded-full border-[4px] border-cyan-500/20"></div>
+              <div className="absolute inset-[80px] rounded-full border-[1px] border-dashed border-cyan-300/50 animate-[spin_30s_linear_infinite]"></div>
+              <div className="absolute inset-[130px] rounded-full border-[25px] border-t-cyan-500/30 border-r-cyan-500/30 border-b-transparent border-l-transparent animate-[spin_20s_linear_infinite]"></div>
+              <div className="absolute inset-[130px] rounded-full border-[2px] border-cyan-400/50"></div>
+              <div className="absolute inset-[190px] rounded-full bg-cyan-400/5 border border-cyan-400/30 shadow-[inset_0_0_60px_rgba(6,182,212,0.15)] flex items-center justify-center">
+                <div className="w-[40%] h-[40%] rounded-full bg-cyan-400/20 blur-xl animate-pulse"></div>
+                <div className="absolute w-[14%] h-[14%] rounded-full bg-white/40 shadow-[0_0_25px_rgba(255,255,255,0.6)]"></div>
+              </div>
+            </div>
+
             {/* Added: Hacker Code Background Image with deep blend modes */}
             <div
               className="absolute inset-0 bg-cover bg-center opacity-10 mix-blend-luminosity z-0 pointer-events-none"
@@ -413,7 +430,7 @@ export const AboutContent = () => {
               </div>
             </div>
 
-            <div className="text-sm md:text-base text-slate-300 max-w-[750px] leading-relaxed mb-8 relative z-10 font-mono tracking-tight bg-black/40 p-4 border-l-4 border-cyan-500 rounded backdrop-blur-sm">
+            <div className="text-sm md:text-base text-slate-300 w-100 leading-relaxed mb-8 relative z-10 font-mono tracking-tight bg-black/40 p-4 border-l-4 border-cyan-500 rounded backdrop-blur-sm">
               <span className="text-green-400">&gt; RUN exe --about</span>
               <br />
               <span className="text-orange-400 font-bold tracking-wide">
@@ -441,142 +458,140 @@ export const AboutContent = () => {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-6 pr-0 sm:pr-0"
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6"
                 >
-                  {/* Category 1 & 4: Web Designing & Version Control */}
-                  <div className="flex flex-col gap-6">
-                    <div>
-                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
-                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                        Web Designing
-                      </h3>
-                      <div className="flex flex-wrap gap-2.5">
-                        {[
-                          "HTML",
-                          "CSS (Sass)",
-                          "Tailwind CSS",
-                          "JavaScript",
-                          "jQuery",
-                          "Bootstrap",
-                          "Vue.js",
-                          "React.js",
-                        ].map((tech, idx) => (
-                          <motion.span
-                            initial={{ opacity: 0, x: -10 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.4, delay: 0.1 * idx }}
-                            key={tech}
-                            className="px-3 py-1.5 bg-cyan-950/30 border border-cyan-500/20 text-cyan-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white transition-all cursor-default"
-                          >
-                            {tech}
-                          </motion.span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
-                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                        Version Control
-                      </h3>
-                      <div className="flex flex-wrap gap-2.5">
-                        {["Git", "GitHub", "GitLab"].map((tech, idx) => (
-                          <motion.span
-                            initial={{ opacity: 0, x: -10 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.4, delay: 0.1 * idx }}
-                            key={tech}
-                            className="px-3 py-1.5 bg-green-950/30 border border-green-500/20 text-green-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(34,197,94,0.1)] hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:border-green-400 hover:bg-green-500/20 hover:text-white transition-all cursor-default"
-                          >
-                            {tech}
-                          </motion.span>
-                        ))}
-                      </div>
+                  {/* 1. Web Designing */}
+                  <div>
+                    <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                      <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                      Web Designing
+                    </h3>
+                    <div className="flex flex-wrap gap-2.5">
+                      {[
+                        "HTML",
+                        "CSS (Sass)",
+                        "Tailwind CSS",
+                        "JavaScript",
+                        "jQuery",
+                        "Bootstrap",
+                        "Vue.js",
+                        "React.js",
+                      ].map((tech, idx) => (
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          key={tech}
+                          className="px-3 py-1.5 bg-cyan-950/30 border border-cyan-500/20 text-cyan-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white transition-all cursor-default"
+                        >
+                          {tech}
+                        </motion.span>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Categories 2, 3 & 5: Dev, DB & OS */}
-                  <div className="flex flex-col gap-6">
-                    <div>
-                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
-                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                        Web Development
-                      </h3>
-                      <div className="flex flex-wrap gap-2.5">
-                        {["PHP", "Laravel", "Node Js"].map((tech, idx) => (
-                          <motion.span
-                            initial={{ opacity: 0, x: -10 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.4, delay: 0.1 * idx }}
-                            key={tech}
-                            className="px-3 py-1.5 bg-orange-950/30 border border-orange-500/20 text-orange-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(249,115,22,0.1)] hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] hover:border-orange-400 hover:bg-orange-500/20 hover:text-white transition-all cursor-default"
-                          >
-                            {tech}
-                          </motion.span>
-                        ))}
-                      </div>
+                  {/* 2. Web Development */}
+                  <div>
+                    <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                      <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                      Web Development
+                    </h3>
+                    <div className="flex flex-wrap gap-2.5">
+                      {["PHP", "Laravel", "Node Js"].map((tech, idx) => (
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          key={tech}
+                          className="px-3 py-1.5 bg-orange-950/30 border border-orange-500/20 text-orange-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(249,115,22,0.1)] hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] hover:border-orange-400 hover:bg-orange-500/20 hover:text-white transition-all cursor-default"
+                        >
+                          {tech}
+                        </motion.span>
+                      ))}
                     </div>
+                  </div>
 
-                    <div>
-                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
-                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                        Database
-                      </h3>
-                      <div className="flex flex-wrap gap-2.5">
-                        {["MySQL", "MongoDB"].map((tech, idx) => (
-                          <motion.span
-                            initial={{ opacity: 0, x: -10 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.4, delay: 0.1 * idx }}
-                            key={tech}
-                            className="px-3 py-1.5 bg-[#8b5cf6]/20 border border-[#8b5cf6]/30 text-[#ddd6fe] text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(139,92,246,0.1)] hover:shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:border-[#8b5cf6] hover:bg-[#8b5cf6]/30 hover:text-white transition-all cursor-default"
-                          >
-                            {tech}
-                          </motion.span>
-                        ))}
-                      </div>
+                  {/* 3. Version Control */}
+                  <div>
+                    <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                      <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                      Version Control
+                    </h3>
+                    <div className="flex flex-wrap gap-2.5">
+                      {["Git", "GitHub", "GitLab"].map((tech, idx) => (
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          key={tech}
+                          className="px-3 py-1.5 bg-green-950/30 border border-green-500/20 text-green-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(34,197,94,0.1)] hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:border-green-400 hover:bg-green-500/20 hover:text-white transition-all cursor-default"
+                        >
+                          {tech}
+                        </motion.span>
+                      ))}
                     </div>
+                  </div>
 
-                    <div>
-                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
-                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                        Working Exp.
-                      </h3>
-                      <div className="flex flex-wrap gap-2.5">
-                        {["Cpanel", "VPS", "DevOps", "CI/CD"].map(
-                          (tech, idx) => (
-                            <motion.span
-                              initial={{ opacity: 0, x: -10 }}
-                              whileInView={{ opacity: 1, x: 0 }}
-                              transition={{ duration: 0.4, delay: 0.1 * idx }}
-                              key={tech}
-                              className="px-3 py-1.5 bg-blue-950/30 border border-blue-500/20 text-blue-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(59,130,246,0.1)] hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:border-blue-400 hover:bg-blue-500/20 hover:text-white transition-all cursor-default"
-                            >
-                              {tech}
-                            </motion.span>
-                          ),
-                        )}
-                      </div>
+                  {/* 4. Database */}
+                  <div>
+                    <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                      <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                      Database
+                    </h3>
+                    <div className="flex flex-wrap gap-2.5">
+                      {["MySQL", "MongoDB"].map((tech, idx) => (
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          key={tech}
+                          className="px-3 py-1.5 bg-[#8b5cf6]/20 border border-[#8b5cf6]/30 text-[#ddd6fe] text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(139,92,246,0.1)] hover:shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:border-[#8b5cf6] hover:bg-[#8b5cf6]/30 hover:text-white transition-all cursor-default"
+                        >
+                          {tech}
+                        </motion.span>
+                      ))}
                     </div>
+                  </div>
 
-                    <div>
-                      <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
-                        <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                        Operating System
-                      </h3>
-                      <div className="flex flex-wrap gap-2.5">
-                        {["Linux", "Windows"].map((tech, idx) => (
-                          <motion.span
-                            initial={{ opacity: 0, x: -10 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.4, delay: 0.1 * idx }}
-                            key={tech}
-                            className="px-3 py-1.5 bg-red-950/30 border border-red-500/20 text-red-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(239,68,68,0.1)] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:border-red-400 hover:bg-red-500/20 hover:text-white transition-all cursor-default"
-                          >
-                            {tech}
-                          </motion.span>
-                        ))}
-                      </div>
+                  {/* 5. Working Exp. */}
+                  <div>
+                    <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                      <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                      Working Exp.
+                    </h3>
+                    <div className="flex flex-wrap gap-2.5">
+                      {["Cpanel", "VPS", "DevOps", "CI/CD"].map((tech, idx) => (
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          key={tech}
+                          className="px-3 py-1.5 bg-blue-950/30 border border-blue-500/20 text-blue-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(59,130,246,0.1)] hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:border-blue-400 hover:bg-blue-500/20 hover:text-white transition-all cursor-default"
+                        >
+                          {tech}
+                        </motion.span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 6. Operating System */}
+                  <div>
+                    <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                      <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                      Operating System
+                    </h3>
+                    <div className="flex flex-wrap gap-2.5">
+                      {["Linux", "Windows"].map((tech, idx) => (
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          key={tech}
+                          className="px-3 py-1.5 bg-red-950/30 border border-red-500/20 text-red-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(239,68,68,0.1)] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:border-red-400 hover:bg-red-500/20 hover:text-white transition-all cursor-default"
+                        >
+                          {tech}
+                        </motion.span>
+                      ))}
                     </div>
                   </div>
                 </motion.div>
