@@ -1,0 +1,49 @@
+<p>
+HELLO. I'M RUPOM EHSAN FROM BNAGLADESH. I AM A FULLSTACK WEB DEVELOPER WORKING
+WITH LOCAL AND INTERNATIONAL CLIENTS SINCE 2018. I CAN DESIGN OR REDESIGN YOUR
+EXISITING WEBSITES OR WEB APPLICATION.BUILD SOCIAL PROFILES , GAIN REVENUE AND
+PROFITS.ITS NOT ONLY MY PROFESSION ITS MY PASSION.<br>
+</p>
+<div>
+<p class="text-center my-2 text-danger border fw-bold">responsilities</p>
+</div>
+<div class="row">
+<div class="col-md-1 col-sm-3 col-4"><span class="text-danger">--&gt;</span></div>
+<div class="col-md-11 col-sm-9 col-8">
+<p>WE DELIVER UNIQUE QUALITY AND RESPONSIVE DESIGN FOR
+WEBSITE</p>
+</div>
+<div class="col-md-1 col-sm-3 col-4"><span class="text-danger">--&gt;</span></div>
+<div class="col-md-11 col-sm-9 col-8">
+<p>WE ARE PROVIDE USER FRIENDLY ENTERFACE, PIXEL IDEALIZE
+FORMATE,W3C LEGITIMATE CODE TO THE USER.</p>
+</div>
+<div class="col-md-1 col-sm-3 col-4"><span class="text-danger">--&gt;</span></div>
+<div class="col-md-11 col-sm-9 col-8">
+<p>WE FOLLOW ALL THE STANDARDS OF GOOGLE SEARCH ENGINE
+OPTIMIZATION</p>
+</div>
+
+<div class="col-md-1 col-sm-3 col-4"><span class="text-danger">--&gt;</span></div>
+<div class="col-md-11 col-sm-9 col-8">
+<p>We uphold the highest standards set by W3C, guaranteeing that
+every aspect of your website aligns with industry benchmarks for excellence
+</p>
+</div>
+
+
+
+<div class="tab-pane fade" id="pills-contact" role="tabpanel"
+aria-labelledby="pills-contact-tab">
+<h3 class="text-center">hobbies</h3>
+<hr class="my-4">
+<p><span>travelling -->></span> " I love to travel because not only is it the ultimate
+adventure but it also exposes you to new types of people, different ways of
+living, and opens up your mind. I just like to walk around in beautiful places
+that resemble the chareteritics of paradies that are explained in the holy quran."</p>
+<p><span>gaming -->></span>i would like to Play game in my free times </p>
+<p><span>sports -->></span>Playing individual sports (criket,football,badminton, etc.)
+</p>
+
+<p><span>technology -->></span>Keeping up with the latest developments in technology</p>
+</div>

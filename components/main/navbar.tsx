@@ -87,7 +87,7 @@ export const Navbar = () => {
             />
           </div>
           <span className="font-black text-cyan-300 tracking-widest text-xs uppercase drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]">
-            John Doe
+            Rupom Ehsan
           </span>
         </Link>
 
