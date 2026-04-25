@@ -2,6 +2,7 @@ import { Contact } from "@/components/main/contact";
 import { Hero } from "@/components/main/hero";
 import { About } from "@/components/main/about";
 import { Projects } from "@/components/main/projects";
+import { Marketplaces } from "@/components/main/marketplace";
 import { Blogs } from "@/components/main/blogs";
 import { Skills } from "@/components/main/experience";
 
@@ -13,6 +14,7 @@ export default function Home() {
         <About />
         <Skills />
         <Projects />
+        <Marketplaces />
         <Blogs />
         <Contact />
       </div>

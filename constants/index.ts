@@ -362,6 +362,10 @@ export const NAV_LINKS = [
     link: "/#projects",
   },
   {
+    title: "Marketplace",
+    link: "/#marketplaces",
+  },
+  {
     title: "Blogs",
     link: "/#blogs",
   },
@@ -372,5 +376,5 @@ export const NAV_LINKS = [
 ] as const;
 
 export const LINKS = {
-  sourceCode: "https://github.com/sanidhyy/space-portfolio",
+  sourceCode: "https://github.com/rupomehsan/Personal-Portfolio-NextJs-Solar-System.git",
 };
