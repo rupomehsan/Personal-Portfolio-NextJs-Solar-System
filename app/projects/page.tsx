@@ -17,9 +17,10 @@ import { API_CONFIG } from "@/config/api";
 const DUMMY_IMG =
   "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=70";
 
-function fmtDate(s: string, short = false) {
+function fmtDate(s: string | null | undefined, short = false) {
+  if (!s) return "";
   const d = new Date(s);
-  if (isNaN(d.getTime())) return s;
+  if (isNaN(d.getTime())) return "";
   return short
     ? `${String(d.getDate()).padStart(2, "0")} ${d.toLocaleString("en-US", { month: "short" })}`
     : `${String(d.getDate()).padStart(2, "0")} ${d.toLocaleString("en-US", { month: "short" })} ${d.getFullYear()}`;
@@ -29,6 +30,22 @@ function thumb(p: string | null) {
   if (!p) return DUMMY_IMG;
   if (p.startsWith("http")) return p;
   return `${API_CONFIG.baseUrl}/storage/${p}`;
+}
+
+function inferCategory(title: string | null | undefined, category: string | null | undefined): string | null {
+  if (category) return category;
+  if (!title) return null;
+  const t = title.toLowerCase();
+  if (t.includes("shop") || t.includes("ecommerce") || t.includes("e-commerce") || t.includes("store")) return "E-Commerce";
+  if (t.includes("laravel")) return "Laravel";
+  if (t.includes("react") || t.includes("next")) return "React";
+  if (t.includes("vue")) return "Vue";
+  if (t.includes("api") || t.includes("backend") || t.includes("rest")) return "API";
+  if (t.includes("mobile") || t.includes("app") || t.includes("flutter")) return "Mobile";
+  if (t.includes("blog") || t.includes("cms") || t.includes("portfolio")) return "Web";
+  if (t.includes("dashboard") || t.includes("admin") || t.includes("panel")) return "Dashboard";
+  if (t.includes("landing") || t.includes("website") || t.includes("site")) return "Web";
+  return null;
 }
 
 function buildPageNums(cur: number, last: number): (number | "…")[] {
@@ -63,6 +80,8 @@ export default function AllProjectsPage() {
   const [allProjects, setAllProjects] = useState<Project[]>([]);
   const [sidebarReady, setSbReady]    = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   useEffect(() => {
     getPagedProjects(1)
       .then(setResult)
@@ -87,6 +106,20 @@ export default function AllProjectsPage() {
 
   const popular    = useMemo(() => getPopularProjects(allProjects), [allProjects]);
   const categories = useMemo(() => extractProjectCategories(allProjects), [allProjects]);
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return null;
+    return allProjects.filter((p) => {
+      const tags = parseTags(p.tags).join(" ").toLowerCase();
+      return (
+        (p.title || p.name || "").toLowerCase().includes(q) ||
+        (p.description ?? "").toLowerCase().includes(q) ||
+        (p.category ?? "").toLowerCase().includes(q) ||
+        tags.includes(q)
+      );
+    });
+  }, [searchQuery, allProjects]);
 
   /* ── Skeleton ── */
   if (gridLoading) return (
@@ -151,36 +184,57 @@ export default function AllProjectsPage() {
           </h1>
         </motion.div>
 
+        {/* Search */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
+          <div className="relative w-100">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-cyan-600 text-xs pointer-events-none select-none">&gt;_</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="SEARCH_PROJECTS..."
+              className="w-full bg-[#0b1426]/80 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400/60 focus:outline-none text-slate-200 font-mono text-sm placeholder:text-slate-700 py-3 pl-10 pr-4 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-300 font-mono text-xs transition-colors"
+              >
+                [ESC]
+              </button>
+            )}
+          </div>
+          {searchResults !== null && (
+            <p className="font-mono text-[11px] text-slate-600 mt-2">
+              <span className="text-purple-400">{searchResults.length}</span> result{searchResults.length !== 1 ? "s" : ""} for{" "}
+              <span className="text-slate-400">&quot;{searchQuery}&quot;</span>
+            </p>
+          )}
+        </motion.div>
+
         {/* Two-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* LEFT: grid + pagination */}
           <div className="lg:col-span-9">
-            {result && (
-              <div className="flex items-center justify-between mb-5 font-mono text-[11px]">
-                <span className="text-slate-600">
-                  Showing{" "}
-                  <span className="text-purple-400">{result.from}–{result.to}</span>
-                  {" "}of{" "}
-                  <span className="text-slate-300">{result.total}</span>
-                  {" "}modules
-                </span>
-                <span className="text-slate-700 hidden sm:block">
-                  PAGE <span className="text-slate-400">{result.currentPage}</span> / {result.lastPage}
-                </span>
-              </div>
-            )}
+            
 
             <AnimatePresence mode="wait">
               <motion.div
-                key={page}
+                key={searchResults ? `search-${searchQuery}` : page}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: pageSwitch ? 0.4 : 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8"
               >
-                {projects.map((project, i) => {
+                {searchResults !== null && searchResults.length === 0 && (
+                  <div className="col-span-full text-center py-20 font-mono">
+                    <div className="text-5xl text-slate-800/60 mb-4">[ NULL ]</div>
+                    <p className="text-slate-600 text-xs tracking-widest">NO_MODULES_FOUND for &quot;{searchQuery}&quot;</p>
+                  </div>
+                )}
+                {(searchResults ?? projects).map((project, i) => {
                   const tags    = parseTags(project.tags);
                   const liveUrl = project.project_url ?? project.github_url ?? "";
 
@@ -217,7 +271,7 @@ export default function AllProjectsPage() {
                         <div className="relative w-full h-36 mb-3 overflow-hidden border border-cyan-500/15 group-hover:border-purple-400/35 transition-colors">
                           <img
                             src={thumb(project.thumbnail_image)}
-                            alt={project.title}
+                            alt={project.title || project.name || "project"}
                             className="w-full h-full object-cover mix-blend-luminosity opacity-70 group-hover:mix-blend-normal group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
                             onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
                           />
@@ -228,7 +282,7 @@ export default function AllProjectsPage() {
                         </div>
 
                         <h3 className="font-mono font-bold text-white text-sm mb-2 group-hover:text-purple-300 transition-colors line-clamp-1">
-                          {project.title}
+                          {project.title || project.name}
                         </h3>
                         <p className="text-slate-500 text-[11px] font-mono leading-relaxed mb-3 flex-grow border-l border-cyan-500/15 pl-2.5 line-clamp-2">
                           {project.description}
@@ -245,7 +299,7 @@ export default function AllProjectsPage() {
                         )}
 
                         <div className="flex gap-2 mt-auto">
-                          <Link href={`/projects/${project.slug}`} className="flex-1">
+                          <Link href={project.slug ? `/projects/${project.slug}` : "#"} className="flex-1">
                             <button className="w-full py-1.5 border border-purple-500/35 text-purple-300 font-mono text-[9px] uppercase tracking-widest hover:bg-purple-500/15 transition-all flex items-center gap-1 justify-center">
                               View Details
                             </button>
@@ -269,8 +323,8 @@ export default function AllProjectsPage() {
               </motion.div>
             </AnimatePresence>
 
-            {/* Pagination */}
-            {result && result.lastPage > 1 && (
+            {/* Pagination — hidden when searching */}
+            {!searchResults && result && result.lastPage > 1 && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                 className="flex items-center justify-center gap-1.5 flex-wrap">
                 <button onClick={() => goToPage(page - 1)} disabled={page === 1 || pageSwitch}
@@ -302,7 +356,7 @@ export default function AllProjectsPage() {
               </motion.div>
             )}
 
-            {result && result.lastPage > 1 && (
+            {!searchResults && result && result.lastPage > 1 && (
               <p className="text-center font-mono text-[10px] text-slate-700 mt-3">
                 Page {result.currentPage} of {result.lastPage} · {result.total} total modules
               </p>
@@ -323,6 +377,8 @@ export default function AllProjectsPage() {
                         { l: "PER_PAGE",   v: result.perPage },
                         { l: "PAGES",      v: result.lastPage },
                         { l: "CATEGORIES", v: sidebarReady ? categories.length : "—" },
+                        { l: "CURR_PAGE",  v: result.currentPage },
+                        { l: "SHOWING",    v: `${result.from}–${result.to}` },
                       ].map((s) => (
                         <div key={s.l} className="bg-black/25 border border-slate-800/60 p-2.5">
                           <div className="font-mono text-[8px] text-slate-700 uppercase tracking-widest mb-1">{s.l}</div>
@@ -353,23 +409,31 @@ export default function AllProjectsPage() {
                     <p className="font-mono text-[10px] text-slate-700 text-center py-4">NO_FEATURED_MODULES</p>
                   ) : (
                     <div className="space-y-3">
-                      {popular.map((p, i) => (
-                        <Link key={p.id} href={`/projects/${p.slug}`} className="flex gap-3 group">
+                      {popular.map((p, i) => {
+                        const cat = inferCategory(p.name, p.category ?? null);
+                        return (
+                        <Link key={p.id} href={p.slug ? `/projects/${p.slug}` : "#"} className="flex gap-3 group">
                           <div className="w-14 h-14 shrink-0 overflow-hidden border border-cyan-500/10 group-hover:border-purple-400/35 transition-colors">
-                            <img src={thumb(p.thumbnail_image)} alt={p.title}
+                            <img src={thumb(p.thumbnail_image)} alt={p.title || p.name || "project"}
                               className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                               onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }} />
                           </div>
                           <div className="min-w-0 flex flex-col justify-center gap-1">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-mono text-[9px] text-orange-600 font-bold">#{i + 1}</span>
+                              <span className="font-mono text-[9px] text-orange-600 font-bold">#{i + 1} </span>
                               {p.is_featured === 1 && <span className="font-mono text-[8px] text-orange-500">★</span>}
+                              {cat && (
+                                <span className="font-mono text-[7px] px-1 py-0.5 bg-cyan-950/50 text-cyan-600 border border-cyan-500/15 uppercase tracking-wide">
+                                  {cat}
+                                </span>
+                              )}
                             </div>
-                            <p className="font-mono text-[11px] text-slate-300 group-hover:text-purple-300 transition-colors line-clamp-2 leading-tight">{p.title}</p>
+                            <p className="font-mono text-[11px] text-slate-300 group-hover:text-purple-300 transition-colors line-clamp-2 leading-tight">{p.title || p.name}</p>
                             <span className="font-mono text-[9px] text-slate-700">{fmtDate(p.created_at, true)}</span>
                           </div>
                         </Link>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </SidebarCard>

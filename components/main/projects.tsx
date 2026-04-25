@@ -97,15 +97,52 @@ export const Projects = () => {
       {/* ── Grid ── */}
       <div className="w-full max-w-[1400px] px-4 md:px-10 mt-32 sm:mt-40 z-20 relative">
 
-        {/* Loading */}
+        {/* Skeleton */}
         {loading && (
-          <div className="flex flex-col items-center gap-4 py-20 font-mono text-cyan-400">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full"
-            />
-            <span className="text-xs tracking-widest animate-pulse">LOADING_MODULES...</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="relative h-full flex flex-col">
+                <div
+                  className="relative h-full flex flex-col bg-[#0b1426]/90 border border-cyan-500/10 p-4 sm:p-5"
+                  style={{ clipPath: "polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,20px 100%,0 calc(100% - 20px))" }}
+                >
+                  <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-cyan-500/20 m-2" />
+                  <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-cyan-500/20 m-2" />
+
+                  {/* header row */}
+                  <div className="flex items-center justify-between mb-3 border-b border-cyan-500/10 pb-2">
+                    <div className="h-2.5 w-16 bg-slate-700/50 animate-pulse rounded-sm" style={{ animationDelay: `${i * 80}ms` }} />
+                    <div className="h-2.5 w-12 bg-slate-700/30 animate-pulse rounded-sm" style={{ animationDelay: `${i * 80 + 40}ms` }} />
+                  </div>
+
+                  {/* thumbnail */}
+                  <div className="w-full h-[150px] sm:h-[180px] mb-4 bg-slate-800/50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+
+                  {/* title */}
+                  <div className="h-4 w-3/4 bg-slate-700/50 animate-pulse rounded-sm mb-2" style={{ animationDelay: `${i * 80 + 40}ms` }} />
+
+                  {/* description lines */}
+                  <div className="space-y-2 mb-4 border-l-2 border-cyan-500/10 pl-3 flex-grow">
+                    <div className="h-2.5 w-full bg-slate-800/50 animate-pulse rounded-sm" style={{ animationDelay: `${i * 80}ms` }} />
+                    <div className="h-2.5 w-5/6 bg-slate-800/50 animate-pulse rounded-sm" style={{ animationDelay: `${i * 80 + 60}ms` }} />
+                    <div className="h-2.5 w-2/3 bg-slate-800/50 animate-pulse rounded-sm" style={{ animationDelay: `${i * 80 + 120}ms` }} />
+                  </div>
+
+                  {/* tags */}
+                  <div className="flex gap-1.5 mb-3">
+                    {[10, 14, 10].map((w, j) => (
+                      <div key={j} className={`h-4 w-${w} bg-slate-800/50 animate-pulse`} style={{ animationDelay: `${i * 80 + j * 30}ms` }} />
+                    ))}
+                  </div>
+
+                  {/* buttons */}
+                  <div className="flex gap-2">
+                    <div className="flex-1 h-8 bg-slate-800/40 animate-pulse border border-slate-700/30" style={{ animationDelay: `${i * 80}ms` }} />
+                    <div className="flex-1 h-8 bg-slate-800/40 animate-pulse border border-slate-700/30" style={{ animationDelay: `${i * 80 + 40}ms` }} />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -160,7 +197,7 @@ export const Projects = () => {
                         <div className="relative w-full h-[150px] sm:h-[180px] mb-4 overflow-hidden border border-cyan-500/20 group-hover:border-cyan-400/50 transition-colors z-10">
                           <img
                             src={thumb(project.thumbnail_image)}
-                            alt={project.title}
+                            alt={project.title || project.name || "Project"}
                             className="w-full h-full object-cover mix-blend-luminosity opacity-70 group-hover:mix-blend-normal group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out"
                             onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
                           />
@@ -173,7 +210,7 @@ export const Projects = () => {
 
                         {/* Title + desc */}
                         <h3 className="text-base sm:text-lg font-bold font-mono text-white mb-2 group-hover:text-cyan-300 transition-colors relative z-10">
-                          {project.title}
+                          {project.title || project.name}
                         </h3>
                         <p className="text-slate-400 text-xs sm:text-sm font-mono leading-relaxed mb-4 flex-grow border-l-2 border-cyan-500/30 pl-3">
                           {project.description}

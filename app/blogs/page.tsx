@@ -17,9 +17,10 @@ import { API_CONFIG } from "@/config/api";
 const DUMMY_IMG =
   "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=70";
 
-function fmtDate(s: string, short = false) {
+function fmtDate(s: string | null | undefined, short = false) {
+  if (!s) return "";
   const d = new Date(s);
-  if (isNaN(d.getTime())) return s;
+  if (isNaN(d.getTime())) return "";
   return short
     ? `${String(d.getDate()).padStart(2, "0")} ${d.toLocaleString("en-US", { month: "short" })}`
     : `${String(d.getDate()).padStart(2, "0")} ${d.toLocaleString("en-US", { month: "short" })} ${d.getFullYear()}`;
@@ -63,9 +64,11 @@ export default function AllBlogsPage() {
   const [pageSwitch, setPageSwitch] = useState(false);
   const [gridError, setGridError]   = useState<string | null>(null);
 
-  /* sidebar data (all 100 blogs fetched in background) */
+  /* sidebar data (all blogs fetched in background) */
   const [allBlogs, setAllBlogs]     = useState<Blog[]>([]);
   const [sidebarReady, setSbReady]  = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   /* ── initial load ── */
   useEffect(() => {
@@ -96,6 +99,17 @@ export default function AllBlogsPage() {
   /* ── sidebar derivations ── */
   const popular    = useMemo(() => getMostPopular(allBlogs), [allBlogs]);
   const categories = useMemo(() => extractCategories(allBlogs), [allBlogs]);
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return null;
+    return allBlogs.filter((b) =>
+      (b.title ?? "").toLowerCase().includes(q) ||
+      (b.description ?? "").toLowerCase().includes(q) ||
+      (b.blog_type ?? "").toLowerCase().includes(q) ||
+      (b.tags ?? "").toLowerCase().includes(q)
+    );
+  }, [searchQuery, allBlogs]);
 
   /* ── loading skeleton ── */
   if (gridLoading) return (
@@ -164,6 +178,34 @@ export default function AllBlogsPage() {
           </h1>
         </motion.div>
 
+        {/* ── Search ── */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
+          <div className="relative w-100">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-cyan-600 text-xs pointer-events-none select-none">&gt;_</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="SEARCH_BLOGS..."
+              className="w-full bg-[#0b1426]/80 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400/60 focus:outline-none text-slate-200 font-mono text-sm placeholder:text-slate-700 py-3 pl-10 pr-4 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-300 font-mono text-xs transition-colors"
+              >
+                [ESC]
+              </button>
+            )}
+          </div>
+          {searchResults !== null && (
+            <p className="font-mono text-[11px] text-slate-600 mt-2">
+              <span className="text-cyan-400">{searchResults.length}</span> result{searchResults.length !== 1 ? "s" : ""} for{" "}
+              <span className="text-slate-400">&quot;{searchQuery}&quot;</span>
+            </p>
+          )}
+        </motion.div>
+
         {/* ── Two-column layout (no items-start → enables sticky sidebar) ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
@@ -171,33 +213,26 @@ export default function AllBlogsPage() {
           <div className="lg:col-span-9">
 
             {/* Stats row */}
-            {result && (
-              <div className="flex items-center justify-between mb-5 font-mono text-[11px]">
-                <span className="text-slate-600">
-                  Showing{" "}
-                  <span className="text-cyan-400">{result.from}–{result.to}</span>
-                  {" "}of{" "}
-                  <span className="text-slate-300">{result.total}</span>
-                  {" "}entries
-                </span>
-                <span className="text-slate-700 hidden sm:block">
-                  PAGE <span className="text-slate-400">{result.currentPage}</span> / {result.lastPage}
-                </span>
-              </div>
-            )}
+           
 
             {/* Grid */}
             <AnimatePresence mode="wait">
               <motion.div
-                key={page}
+                key={searchResults ? `search-${searchQuery}` : page}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: pageSwitch ? 0.4 : 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8"
               >
-                {blogs.map((blog, i) => (
-                  <Link key={blog.id} href={`/blogs/${blog.slug}`} className="block group">
+                {searchResults !== null && searchResults.length === 0 && (
+                  <div className="col-span-full text-center py-20 font-mono">
+                    <div className="text-5xl text-slate-800/60 mb-4">[ NULL ]</div>
+                    <p className="text-slate-600 text-xs tracking-widest">NO_LOGS_FOUND for &quot;{searchQuery}&quot;</p>
+                  </div>
+                )}
+                {(searchResults ?? blogs).map((blog, i) => (
+                  <Link key={blog.id} href={blog.slug ? `/blogs/${blog.slug}` : "#"} className="block group">
                     <motion.div
                       initial={{ opacity: 0, y: 14 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -214,7 +249,7 @@ export default function AllBlogsPage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0b1426] via-transparent to-transparent z-10" />
                         <img
                           src={thumb(blog.thumbnail_image)}
-                          alt={blog.title}
+                          alt={blog.title ?? "blog"}
                           className="w-full h-full object-cover grayscale group-hover:grayscale-0 scale-100 group-hover:scale-[1.04] transition-all duration-700"
                           onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
                         />
@@ -263,8 +298,8 @@ export default function AllBlogsPage() {
               </motion.div>
             </AnimatePresence>
 
-            {/* ── Pagination ── */}
-            {result && result.lastPage > 1 && (
+            {/* ── Pagination — hidden when searching ── */}
+            {!searchResults && result && result.lastPage > 1 && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -314,7 +349,7 @@ export default function AllBlogsPage() {
             )}
 
             {/* Page jump info */}
-            {result && result.lastPage > 1 && (
+            {!searchResults && result && result.lastPage > 1 && (
               <p className="text-center font-mono text-[10px] text-slate-700 mt-3">
                 Page {result.currentPage} of {result.lastPage} · {result.total} total entries
               </p>
@@ -366,11 +401,11 @@ export default function AllBlogsPage() {
                   ) : (
                     <div className="space-y-3">
                       {popular.map((b, i) => (
-                        <Link key={b.id} href={`/blogs/${b.slug}`} className="flex gap-3 group">
+                        <Link key={b.id} href={b.slug ? `/blogs/${b.slug}` : "#"} className="flex gap-3 group">
                           <div className="w-14 h-14 shrink-0 overflow-hidden border border-cyan-500/10 group-hover:border-orange-400/35 transition-colors">
                             <img
                               src={thumb(b.thumbnail_image)}
-                              alt={b.title}
+                              alt={b.title ?? "blog"}
                               className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                               onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
                             />

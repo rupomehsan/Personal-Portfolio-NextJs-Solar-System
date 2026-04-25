@@ -12,14 +12,11 @@ import Image from "next/image";
 import {
   FaGithub,
   FaLinkedinIn,
-  FaXTwitter,
-  FaDiscord,
-  FaYoutube,
   FaFacebook,
-  FaInstagram,
-  FaTwitch,
-  FaDribbble,
+  FaTelegram,
+  FaWhatsapp,
 } from "react-icons/fa6";
+import { SiFiverr, SiUpwork, SiFreelancer } from "react-icons/si";
 import { useRef, useState, useEffect } from "react";
 import {
   slideInFromLeft,
@@ -64,6 +61,21 @@ export const HeroContent = () => {
   const handleCircleLeave = () => {
     circleRotX.set(0);
     circleRotY.set(0);
+  };
+
+  // Orbital system 3D mouse tilt
+  const orbMouseX = useMotionValue(0);
+  const orbMouseY = useMotionValue(0);
+  const smoothOrbX = useSpring(orbMouseX, { stiffness: 100, damping: 18 });
+  const smoothOrbY = useSpring(orbMouseY, { stiffness: 100, damping: 18 });
+  const handleOrbitalMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    orbMouseX.set(-((e.clientY - r.top - r.height / 2) / (r.height / 2)) * 18);
+    orbMouseY.set(((e.clientX - r.left - r.width / 2) / (r.width / 2)) * 18);
+  };
+  const handleOrbitalLeave = () => {
+    orbMouseX.set(0);
+    orbMouseY.set(0);
   };
 
   // Extremely professional, subtle 3D multi-layered parallax offsets
@@ -559,7 +571,7 @@ export const HeroContent = () => {
                   {
                     title: "GitHub",
                     Icon: FaGithub,
-                    link: "https://github.com",
+                    link: "https://github.com/rupomehsan",
                     color: "hover:text-white",
                     bColor: "hover:border-white/50",
                     shadow: "hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]",
@@ -567,50 +579,58 @@ export const HeroContent = () => {
                   {
                     title: "LinkedIn",
                     Icon: FaLinkedinIn,
-                    link: "https://linkedin.com",
-                    color: "hover:text-[#0077b5]",
-                    bColor: "hover:border-[#0077b5]/50",
+                    link: "https://www.linkedin.com/in/md-abu-ahsan-54515a1b2/",
+                    color: "hover:text-[#0077B5]",
+                    bColor: "hover:border-[#0077B5]/50",
                     shadow: "hover:shadow-[0_0_20px_rgba(0,119,181,0.6)]",
-                  },
-                  {
-                    title: "X",
-                    Icon: FaXTwitter,
-                    link: "https://x.com",
-                    color: "hover:text-white",
-                    bColor: "hover:border-white/50",
-                    shadow: "hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]",
-                  },
-                  {
-                    title: "Discord",
-                    Icon: FaDiscord,
-                    link: "https://discord.com",
-                    color: "hover:text-[#5865F2]",
-                    bColor: "hover:border-[#5865F2]/50",
-                    shadow: "hover:shadow-[0_0_20px_rgba(88,101,242,0.6)]",
-                  },
-                  {
-                    title: "YouTube",
-                    Icon: FaYoutube,
-                    link: "https://youtube.com",
-                    color: "hover:text-[#FF0000]",
-                    bColor: "hover:border-[#FF0000]/50",
-                    shadow: "hover:shadow-[0_0_20px_rgba(255,0,0,0.6)]",
                   },
                   {
                     title: "Facebook",
                     Icon: FaFacebook,
-                    link: "https://facebook.com",
+                    link: "https://www.facebook.com/rupom.ehsan/",
                     color: "hover:text-[#1877F2]",
                     bColor: "hover:border-[#1877F2]/50",
                     shadow: "hover:shadow-[0_0_20px_rgba(24,119,242,0.6)]",
                   },
                   {
-                    title: "Instagram",
-                    Icon: FaInstagram,
-                    link: "https://instagram.com",
-                    color: "hover:text-[#E1306C]",
-                    bColor: "hover:border-[#E1306C]/50",
-                    shadow: "hover:shadow-[0_0_20px_rgba(225,48,108,0.6)]",
+                    title: "WhatsApp",
+                    Icon: FaWhatsapp,
+                    link: "https://wa.me/8801683392241",
+                    color: "hover:text-[#25D366]",
+                    bColor: "hover:border-[#25D366]/50",
+                    shadow: "hover:shadow-[0_0_20px_rgba(37,211,102,0.6)]",
+                  },
+                  {
+                    title: "Telegram",
+                    Icon: FaTelegram,
+                    link: "https://web.telegram.org/k/#-2272837972",
+                    color: "hover:text-[#26A5E4]",
+                    bColor: "hover:border-[#26A5E4]/50",
+                    shadow: "hover:shadow-[0_0_20px_rgba(38,165,228,0.6)]",
+                  },
+                  {
+                    title: "Fiverr",
+                    Icon: SiFiverr,
+                    link: "https://www.fiverr.com/rupom_ehsan/buying?source=avatar_menu_profile",
+                    color: "hover:text-[#1DBF73]",
+                    bColor: "hover:border-[#1DBF73]/50",
+                    shadow: "hover:shadow-[0_0_20px_rgba(29,191,115,0.6)]",
+                  },
+                  {
+                    title: "Upwork",
+                    Icon: SiUpwork,
+                    link: "https://www.upwork.com/freelancers/~010e8a7dea092d1282",
+                    color: "hover:text-[#6FDA44]",
+                    bColor: "hover:border-[#6FDA44]/50",
+                    shadow: "hover:shadow-[0_0_20px_rgba(111,218,68,0.6)]",
+                  },
+                  {
+                    title: "Freelancer",
+                    Icon: SiFreelancer,
+                    link: "https://www.freelancer.com.bd/u/rupomehsan",
+                    color: "hover:text-[#29B2FE]",
+                    bColor: "hover:border-[#29B2FE]/50",
+                    shadow: "hover:shadow-[0_0_20px_rgba(41,178,254,0.6)]",
                   },
                 ] as const
               ).map((item, i, arr) => {
@@ -725,14 +745,15 @@ export const HeroContent = () => {
             transition={{ delay: 0.5, duration: 0.5 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full"
           >
-            {/* Hire Me */}
-            <motion.button
+            {/* Hire Me — scrolls to #contact */}
+            <motion.a
+              href="#contact"
               whileHover={{
                 boxShadow:
                   "0 0 28px rgba(6,182,212,0.35), inset 0 0 20px rgba(6,182,212,0.07)",
               }}
               whileTap={{ scale: 0.96 }}
-              className="group/hire relative w-full sm:w-auto px-8 py-3 overflow-hidden bg-[#020617]/55 backdrop-blur-sm border border-cyan-500/45"
+              className="group/hire relative w-full sm:w-auto px-8 py-3 overflow-hidden bg-[#020617]/55 backdrop-blur-sm border border-cyan-500/45 cursor-pointer"
               style={{
                 clipPath:
                   "polygon(12px 0%,100% 0%,100% calc(100% - 12px),calc(100% - 12px) 100%,0% 100%,0% 12px)",
@@ -762,16 +783,18 @@ export const HeroContent = () => {
                 </svg>
                 Hire Me
               </span>
-            </motion.button>
+            </motion.a>
 
-            {/* Download CV */}
-            <motion.button
+            {/* Download CV — triggers browser download of Resume-of-Ahsan.pdf */}
+            <motion.a
+              href="/Resume-of-Ahsan.pdf"
+              download="Resume-of-Ahsan.pdf"
               whileHover={{
                 boxShadow:
                   "0 0 28px rgba(99,102,241,0.35), inset 0 0 20px rgba(99,102,241,0.07)",
               }}
               whileTap={{ scale: 0.96 }}
-              className="group/cv relative w-full sm:w-auto px-8 py-3 overflow-hidden bg-[#020617]/55 backdrop-blur-sm border border-indigo-500/45"
+              className="group/cv relative w-full sm:w-auto px-8 py-3 overflow-hidden bg-[#020617]/55 backdrop-blur-sm border border-indigo-500/45 cursor-pointer"
               style={{
                 clipPath:
                   "polygon(0% 0%,calc(100% - 12px) 0%,100% 12px,100% 100%,12px 100%,0% calc(100% - 12px))",
@@ -798,7 +821,7 @@ export const HeroContent = () => {
                 </svg>
                 Download CV
               </span>
-            </motion.button>
+            </motion.a>
           </motion.div>
 
           {/* ── Enhanced Status Badge ── */}
@@ -856,7 +879,7 @@ export const HeroContent = () => {
           rotateX: rotateXOrbital,
           rotateZ: rotateZOrbital,
           transformStyle: "preserve-3d",
-          perspective: 1000,
+          perspective: 1500,
         }}
         className="w-full h-full flex justify-center items-center relative z-0 origin-center basis-1/2 min-h-[400px] md:min-h-[600px]"
       >
@@ -866,9 +889,16 @@ export const HeroContent = () => {
         >
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] h-[250px] md:w-[450px] md:h-[450px] bg-cyan-500/20 blur-[80px] rounded-full point-events-none"></div>
         </motion.div>
-        <div
-          style={{ transformStyle: "preserve-3d" }}
-          className="relative w-[300px] h-[300px] md:w-[600px] md:h-[600px] flex items-center justify-center"
+        <motion.div
+          onMouseMove={handleOrbitalMove}
+          onMouseLeave={handleOrbitalLeave}
+          style={{
+            transformStyle: "preserve-3d",
+            rotateX: smoothOrbX,
+            rotateY: smoothOrbY,
+            perspective: 1200,
+          }}
+          className="relative w-[300px] h-[300px] md:w-[600px] md:h-[600px] flex items-center justify-center cursor-pointer"
         >
           {/* Waving Background Circles - Smooth pulsating effect to fix blipping */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150px] h-[150px]">
@@ -902,24 +932,42 @@ export const HeroContent = () => {
             ></motion.div>
           </div>
 
-          {/* Decorative spinning rings (Orbit Path) - Added 4th outer ring */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%]">
-            <div className="w-full h-full rounded-full border-[1px] border-dashed border-indigo-400/50 shadow-[0_0_15px_rgba(129,140,248,0.5)] animate-[spin_120s_linear_infinite]"></div>
+          {/* Decorative spinning rings (Orbit Path) — each at a different Z depth */}
+          <div
+            className="absolute top-1/2 left-1/2 w-[120%] h-[120%]"
+            style={{ transform: "translateZ(-90px) translateX(-50%) translateY(-50%)", transformStyle: "preserve-3d" }}
+          >
+            <div className="w-full h-full rounded-full border-[1px] border-dashed border-indigo-400/30 shadow-[0_0_15px_rgba(129,140,248,0.3)] animate-[spin_120s_linear_infinite]"></div>
           </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100%] h-[100%]">
-            <div className="w-full h-full rounded-full border-[1px] border-dashed border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.5)] animate-[spin_120s_linear_infinite]"></div>
+          <div
+            className="absolute top-1/2 left-1/2 w-[100%] h-[100%]"
+            style={{ transform: "translateZ(-50px) translateX(-50%) translateY(-50%)", transformStyle: "preserve-3d" }}
+          >
+            <div className="w-full h-full rounded-full border-[1px] border-dashed border-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.4)] animate-[spin_120s_linear_infinite]"></div>
           </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%]">
+          <div
+            className="absolute top-1/2 left-1/2 w-[80%] h-[80%]"
+            style={{ transform: "translateZ(-20px) translateX(-50%) translateY(-50%)", transformStyle: "preserve-3d" }}
+          >
             <div className="w-full h-full rounded-full border-[1px] border-dashed border-purple-400/50 shadow-[0_0_15px_rgba(192,132,252,0.5)] animate-[spin_120s_linear_infinite]"></div>
           </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%]">
-            <div className="w-full h-full rounded-full border-[1px] border-dashed border-teal-400/50 shadow-[0_0_15px_rgba(45,212,191,0.5)] animate-[spin_120s_linear_infinite]"></div>
+          <div
+            className="absolute top-1/2 left-1/2 w-[60%] h-[60%]"
+            style={{ transform: "translateZ(10px) translateX(-50%) translateY(-50%)", transformStyle: "preserve-3d" }}
+          >
+            <div className="w-full h-full rounded-full border-[1px] border-dashed border-teal-400/60 shadow-[0_0_15px_rgba(45,212,191,0.6)] animate-[spin_120s_linear_infinite]"></div>
           </div>
 
-          {/* Central Processor Image - Perfectly centered with absolute placement wrapper */}
+          {/* Central Processor Image - lifted forward in Z for strong 3D pop */}
           {/* Enhanced Sun-like Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100px] h-[100px] md:w-[250px] md:h-[250px] bg-cyan-400/40 blur-[80px] rounded-full animate-pulse z-20 pointer-events-none"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
+          <div
+            className="absolute top-1/2 left-1/2 w-[100px] h-[100px] md:w-[250px] md:h-[250px] bg-cyan-400/50 blur-[80px] rounded-full animate-pulse z-20 pointer-events-none"
+            style={{ transform: "translateZ(40px) translateX(-50%) translateY(-50%)" }}
+          ></div>
+          <div
+            className="absolute top-1/2 left-1/2 z-30"
+            style={{ transform: "translateZ(70px) translateX(-50%) translateY(-50%)" }}
+          >
             <motion.div
               animate={{ y: [-5, 5, -5] }}
               transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
@@ -1880,7 +1928,7 @@ export const HeroContent = () => {
               </motion.div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
     </motion.div>
   );

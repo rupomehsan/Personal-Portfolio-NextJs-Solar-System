@@ -52,7 +52,7 @@ const TypewriterText = ({
 export const AboutContent = () => {
   const [mounted, setMounted] = useState(false);
   const [consoleReady, setConsoleReady] = useState(false);
-  const [activeTab, setActiveTab] = useState("skills");
+  const [activeTab, setActiveTab] = useState("introduce");
 
   useEffect(() => {
     setMounted(true);
@@ -282,7 +282,7 @@ export const AboutContent = () => {
       >
         {/* TABS OUTSIDE THE CARD */}
         <div className="flex flex-row justify-center sm:justify-start gap-2 sm:gap-4 mb-4 relative z-30 w-full xl:w-auto">
-          {["skills", "education", "services"].map((tab) => (
+          {["introduce", "skills", "education", "services"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -430,36 +430,127 @@ export const AboutContent = () => {
               </div>
             </div>
 
-            <div className="text-sm md:text-base text-slate-300 w-100 leading-relaxed mb-8 relative z-10 font-mono tracking-tight bg-black/40 p-4 border-l-4 border-cyan-500 rounded backdrop-blur-sm">
-              <span className="text-green-400">&gt; RUN exe --about</span>
-              <br />
-              <span className="text-orange-400 font-bold tracking-wide">
-                <TypewriterText
-                  text="I am a Full-Stack Web Developer"
-                  speed={40}
-                  delay={1800}
-                />
-              </span>{" "}
-              {consoleReady ? (
-                <TypewriterText
-                  text={
-                    "with strong design and coding expertise, capable of translating client requirements into innovative, scalable, and high-quality web applications.<br/><br/><span style='color: #22d3ee;'>I blend robust back-end architecture with modern, visually stunning front-end interfaces</span> to deliver seamless user experiences. My passion lies in writing clean, modular code, continuously learning and adapting to new technologies in the ever-evolving digital landscape."
-                  }
-                  speed={15}
-                  delay={3200}
-                />
-              ) : null}
-            </div>
-
             {/* DYNAMIC TAB CONTENT */}
             <div className="relative z-10 min-h-[300px] mt-6">
+              {activeTab === "introduce" && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="space-y-6"
+                >
+                  {/* Console intro block */}
+                  <div className="text-sm text-slate-300 leading-relaxed font-mono bg-black/40 p-4 border-l-4 border-cyan-500 rounded backdrop-blur-sm">
+                    <span className="text-green-400">&gt; RUN exe --about</span>
+                    <br />
+                    <span className="text-orange-400 font-bold tracking-wide">
+                      <TypewriterText
+                        text="I am Rupom Ehsan, a Full-Stack Web Developer and Project Manager"
+                        speed={30}
+                        delay={500}
+                      />
+                    </span>{" "}
+                    {consoleReady ? (
+                      <TypewriterText
+                        text={
+                          "based in Bangladesh, currently working at <span style='color:#22d3ee;font-weight:bold;'>TechPark IT</span>. Since 2018, I have been delivering high-quality web solutions for both local and international clients, specializing in building scalable, user-friendly, and performance-driven websites and web applications.<br/><br/>I focus on helping businesses grow by creating strong digital platforms that increase engagement and revenue. From designing modern interfaces to managing complete development lifecycles, I ensure efficient execution and timely delivery. For me, software development is not just a profession — <span style='color:#f97316;font-weight:bold;'>it&apos;s a passion that drives continuous learning and innovation.</span>"
+                        }
+                        speed={12}
+                        delay={2200}
+                      />
+                    ) : null}
+                  </div>
+
+                  {/* Responsibilities */}
+                  <div className="bg-[#020617]/60 border border-orange-500/20 rounded backdrop-blur-sm p-4">
+                    <p className="text-center text-orange-400 font-bold font-mono tracking-widest uppercase text-xs mb-4 border border-orange-500/30 py-1">
+                      ── Responsibilities ──
+                    </p>
+                    <ul className="space-y-3">
+                      {[
+                        "Architect and deliver responsive, high-performance web applications — from wireframe to production — tailored precisely to each client's goals.",
+                        "Design pixel-perfect, W3C-compliant user interfaces with a strong focus on accessibility, cross-browser compatibility, and seamless UX.",
+                        "Implement advanced SEO strategies aligned with Google's Core Web Vitals standards to maximize organic visibility and digital reach.",
+                        "Manage full development lifecycles — requirement analysis, sprint planning, code review, and on-time delivery — ensuring quality at every stage.",
+                      ].map((item, idx) => (
+                        <motion.li
+                          key={idx}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 * idx, duration: 0.4 }}
+                          className="grid grid-cols-[28px_1fr] gap-x-3 text-xs sm:text-sm text-slate-300 font-mono w-full"
+                        >
+                          <span className="text-orange-400 font-bold pt-0.5 select-none shrink-0">──&gt;</span>
+                          <span className="text-left leading-relaxed min-w-0 break-words">{item}</span>
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Hobbies */}
+                  <div className="bg-[#020617]/60 border border-purple-500/20 rounded backdrop-blur-sm p-4">
+                    <p className="text-center text-purple-400 font-bold font-mono tracking-widest uppercase text-xs mb-4 border border-purple-500/30 py-1">
+                      ── Hobbies ──
+                    </p>
+                    <ul className="space-y-3">
+                      {[
+                        {
+                          label: "Travelling",
+                          text: "Exploring new cultures, cities, and landscapes fuels my creativity and broadens my perspective. Travel teaches adaptability — a mindset I bring directly into every project I build.",
+                        },
+                        {
+                          label: "Sports",
+                          text: "Staying physically active through cricket, football, and badminton sharpens discipline and team spirit — qualities that translate into focused, collaborative work on every development team.",
+                        },
+                        {
+                          label: "Technology",
+                          text: "Staying at the forefront of emerging technologies — from AI-driven tools to cloud architecture — ensures my solutions remain modern, competitive, and future-proof for every client.",
+                        },
+                        {
+                          label: "Open Source",
+                          text: "Contributing to open-source projects and the developer community deepens my expertise and reflects my commitment to knowledge sharing and continuous growth in the software industry.",
+                        },
+                      ].map((item, idx) => (
+                        <motion.li
+                          key={idx}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 * idx + 0.2, duration: 0.4 }}
+                          className="grid grid-cols-[110px_1fr] gap-x-3 text-xs sm:text-sm text-slate-300 font-mono w-full"
+                        >
+                          <span className="text-purple-400 font-bold whitespace-nowrap pt-0.5 select-none">
+                            {item.label} &rarr;&rarr;
+                          </span>
+                          <span className="text-left leading-relaxed min-w-0 break-words">{item.text}</span>
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
+                </motion.div>
+              )}
+
               {activeTab === "skills" && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6"
+                  className="space-y-6"
                 >
+                  {/* Console header */}
+                  <div className="text-sm text-slate-300 leading-relaxed font-mono bg-black/40 p-4 border-l-4 border-cyan-500 rounded backdrop-blur-sm">
+                    <span className="text-green-400">&gt; LOAD module --skills</span>
+                    <br />
+                    <span className="text-cyan-400/80 text-xs">
+                      STATUS:{" "}
+                      <span className="text-slate-300">
+                        7+ years of active development across full-stack ecosystems. Proficient in frontend design, backend architecture, databases, version control, and infrastructure management.
+                      </span>
+                    </span>
+                  </div>
+
+                  {/* Skills grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+
                   {/* 1. Web Designing */}
                   <div>
                     <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
@@ -467,23 +558,9 @@ export const AboutContent = () => {
                       Web Designing
                     </h3>
                     <div className="flex flex-wrap gap-2.5">
-                      {[
-                        "HTML",
-                        "CSS (Sass)",
-                        "Tailwind CSS",
-                        "JavaScript",
-                        "jQuery",
-                        "Bootstrap",
-                        "Vue.js",
-                        "React.js",
-                      ].map((tech, idx) => (
-                        <motion.span
-                          initial={{ opacity: 0, x: -10 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.4, delay: 0.05 * idx }}
-                          key={tech}
-                          className="px-3 py-1.5 bg-cyan-950/30 border border-cyan-500/20 text-cyan-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white transition-all cursor-default"
-                        >
+                      {["HTML5", "CSS3 (Sass)", "Tailwind CSS", "JavaScript", "jQuery", "Bootstrap", "Vue.js", "React.js", "Next.js"].map((tech, idx) => (
+                        <motion.span key={tech} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          className="px-3 py-1.5 bg-cyan-950/30 border border-cyan-500/20 text-cyan-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white transition-all cursor-default">
                           {tech}
                         </motion.span>
                       ))}
@@ -497,35 +574,26 @@ export const AboutContent = () => {
                       Web Development
                     </h3>
                     <div className="flex flex-wrap gap-2.5">
-                      {["PHP", "Laravel", "Node Js"].map((tech, idx) => (
-                        <motion.span
-                          initial={{ opacity: 0, x: -10 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.4, delay: 0.05 * idx }}
-                          key={tech}
-                          className="px-3 py-1.5 bg-orange-950/30 border border-orange-500/20 text-orange-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(249,115,22,0.1)] hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] hover:border-orange-400 hover:bg-orange-500/20 hover:text-white transition-all cursor-default"
-                        >
+                      {["PHP", "Laravel", "Node.js", "Express.js", "REST API"].map((tech, idx) => (
+                        <motion.span key={tech} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          className="px-3 py-1.5 bg-orange-950/30 border border-orange-500/20 text-orange-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(249,115,22,0.1)] hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] hover:border-orange-400 hover:bg-orange-500/20 hover:text-white transition-all cursor-default">
                           {tech}
                         </motion.span>
                       ))}
                     </div>
                   </div>
 
-                  {/* 3. Version Control */}
+                  {/* 3. Programming Languages */}
                   <div>
                     <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
-                      <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                      Version Control
+                      <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></span>
+                      Programming Languages
+                      <span className="text-[9px] text-yellow-500/70 font-normal normal-case tracking-normal ml-1">(Basic)</span>
                     </h3>
                     <div className="flex flex-wrap gap-2.5">
-                      {["Git", "GitHub", "GitLab"].map((tech, idx) => (
-                        <motion.span
-                          initial={{ opacity: 0, x: -10 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.4, delay: 0.05 * idx }}
-                          key={tech}
-                          className="px-3 py-1.5 bg-green-950/30 border border-green-500/20 text-green-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(34,197,94,0.1)] hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:border-green-400 hover:bg-green-500/20 hover:text-white transition-all cursor-default"
-                        >
+                      {["C", "C++", "Java", "Python"].map((tech, idx) => (
+                        <motion.span key={tech} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          className="px-3 py-1.5 bg-yellow-950/30 border border-yellow-500/20 text-yellow-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(234,179,8,0.1)] hover:shadow-[0_0_15px_rgba(234,179,8,0.4)] hover:border-yellow-400 hover:bg-yellow-500/20 hover:text-white transition-all cursor-default">
                           {tech}
                         </motion.span>
                       ))}
@@ -539,35 +607,25 @@ export const AboutContent = () => {
                       Database
                     </h3>
                     <div className="flex flex-wrap gap-2.5">
-                      {["MySQL", "MongoDB"].map((tech, idx) => (
-                        <motion.span
-                          initial={{ opacity: 0, x: -10 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.4, delay: 0.05 * idx }}
-                          key={tech}
-                          className="px-3 py-1.5 bg-[#8b5cf6]/20 border border-[#8b5cf6]/30 text-[#ddd6fe] text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(139,92,246,0.1)] hover:shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:border-[#8b5cf6] hover:bg-[#8b5cf6]/30 hover:text-white transition-all cursor-default"
-                        >
+                      {["MySQL", "PostgreSQL", "MongoDB", "Firebase", "Redis"].map((tech, idx) => (
+                        <motion.span key={tech} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          className="px-3 py-1.5 bg-[#8b5cf6]/20 border border-[#8b5cf6]/30 text-[#ddd6fe] text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(139,92,246,0.1)] hover:shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:border-[#8b5cf6] hover:bg-[#8b5cf6]/30 hover:text-white transition-all cursor-default">
                           {tech}
                         </motion.span>
                       ))}
                     </div>
                   </div>
 
-                  {/* 5. Working Exp. */}
+                  {/* 5. Version Control & DevOps */}
                   <div>
                     <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
                       <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                      Working Exp.
+                      Version Control & DevOps
                     </h3>
                     <div className="flex flex-wrap gap-2.5">
-                      {["Cpanel", "VPS", "DevOps", "CI/CD"].map((tech, idx) => (
-                        <motion.span
-                          initial={{ opacity: 0, x: -10 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.4, delay: 0.05 * idx }}
-                          key={tech}
-                          className="px-3 py-1.5 bg-blue-950/30 border border-blue-500/20 text-blue-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(59,130,246,0.1)] hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:border-blue-400 hover:bg-blue-500/20 hover:text-white transition-all cursor-default"
-                        >
+                      {["Git", "GitHub", "GitLab", "Cpanel", "VPS", "Docker", "CI/CD"].map((tech, idx) => (
+                        <motion.span key={tech} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          className="px-3 py-1.5 bg-green-950/30 border border-green-500/20 text-green-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(34,197,94,0.1)] hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:border-green-400 hover:bg-green-500/20 hover:text-white transition-all cursor-default">
                           {tech}
                         </motion.span>
                       ))}
@@ -581,19 +639,32 @@ export const AboutContent = () => {
                       Operating System
                     </h3>
                     <div className="flex flex-wrap gap-2.5">
-                      {["Linux", "Windows"].map((tech, idx) => (
-                        <motion.span
-                          initial={{ opacity: 0, x: -10 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.4, delay: 0.05 * idx }}
-                          key={tech}
-                          className="px-3 py-1.5 bg-red-950/30 border border-red-500/20 text-red-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(239,68,68,0.1)] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:border-red-400 hover:bg-red-500/20 hover:text-white transition-all cursor-default"
-                        >
+                      {["Linux (Ubuntu)", "Windows "].map((tech, idx) => (
+                        <motion.span key={tech} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          className="px-3 py-1.5 bg-red-950/30 border border-red-500/20 text-red-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(239,68,68,0.1)] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:border-red-400 hover:bg-red-500/20 hover:text-white transition-all cursor-default">
                           {tech}
                         </motion.span>
                       ))}
                     </div>
                   </div>
+
+                  {/* 7. Soft Skills */}
+                  <div className="sm:col-span-2">
+                    <h3 className="flex items-center gap-2 text-[11px] text-cyan-300 font-bold uppercase tracking-widest mb-4 border-b border-cyan-500/30 pb-2">
+                      <span className="w-1.5 h-1.5 bg-pink-400 rounded-full animate-pulse"></span>
+                      Soft Skills
+                    </h3>
+                    <div className="flex flex-wrap gap-2.5">
+                      {["Problem Solving", "Critical Thinking", "Team Leadership", "Project Management", "Client Communication", "Agile / Scrum", "Time Management", "Adaptability", "Attention to Detail", "Mentoring"].map((tech, idx) => (
+                        <motion.span key={tech} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.05 * idx }}
+                          className="px-3 py-1.5 bg-pink-950/30 border border-pink-500/20 text-pink-100 text-[10px] sm:text-xs rounded backdrop-blur-md shadow-[0_0_8px_rgba(236,72,153,0.1)] hover:shadow-[0_0_15px_rgba(236,72,153,0.4)] hover:border-pink-400 hover:bg-pink-500/20 hover:text-white transition-all cursor-default">
+                          {tech}
+                        </motion.span>
+                      ))}
+                    </div>
+                  </div>
+
+                  </div>{/* end skills grid */}
                 </motion.div>
               )}
 
@@ -604,6 +675,18 @@ export const AboutContent = () => {
                   transition={{ duration: 0.5 }}
                   className="space-y-6"
                 >
+                  {/* Console header */}
+                  <div className="text-sm text-slate-300 leading-relaxed font-mono bg-black/40 p-4 border-l-4 border-cyan-500 rounded backdrop-blur-sm">
+                    <span className="text-green-400">&gt; QUERY database --education</span>
+                    <br />
+                    <span className="text-cyan-400/80 text-xs">
+                      STATUS:{" "}
+                      <span className="text-slate-300">
+                        Formal academic foundation in Computer Science &amp; Engineering, reinforced by 7+ years of hands-on industry experience and continuous self-directed learning.
+                      </span>
+                    </span>
+                  </div>
+
                   <div className="relative pl-6 border-l border-cyan-500/30 space-y-6">
                     <div className="border-l-[3px] border-cyan-500/50 pl-6 relative">
                       <div className="absolute w-[14px] h-[14px] bg-cyan-950 border-2 border-cyan-400 rounded-full -left-[9px] top-0 shadow-[0_0_15px_rgba(34,211,238,0.8)] z-10 flex items-center justify-center">
@@ -673,57 +756,95 @@ export const AboutContent = () => {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-4 pr-0 sm:pr-0"
+                  className="space-y-4"
                 >
-                  <div className="p-5 border border-cyan-500/30 bg-cyan-950/20 backdrop-blur-sm hover:border-cyan-400/80 transition-all group relative overflow-hidden group">
+                  {/* Console header */}
+                  <div className="text-sm text-slate-300 leading-relaxed font-mono bg-black/40 p-4 border-l-4 border-cyan-500 rounded backdrop-blur-sm">
+                    <span className="text-green-400">&gt; LIST services --available</span>
+                    <br />
+                    <span className="text-cyan-400/80 text-xs">
+                      STATUS:{" "}
+                      <span className="text-slate-300">
+                        End-to-end web development services for startups, SMEs, and enterprise clients. Available for freelance, contract, and long-term collaboration.
+                      </span>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                  {/* Web Design */}
+                  <div className="p-5 border border-cyan-500/30 bg-cyan-950/20 backdrop-blur-sm hover:border-cyan-400/80 transition-all group relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                     <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-cyan-500/30 opacity-0 group-hover:opacity-100 transition-all z-10 m-2"></div>
                     <h3 className="text-cyan-300 text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2 border-b border-cyan-500/30 pb-2 font-mono group-hover:text-white transition-colors">
-                      <span className="text-xl font-sans text-cyan-500 group-hover:text-cyan-300">
-                        {"</>"}
-                      </span>{" "}
-                      Frontend Architecture
+                      <span className="text-lg text-cyan-500 group-hover:text-cyan-300">🎨</span> Web Design
                     </h3>
                     <p className="text-slate-400 text-xs leading-relaxed">
-                      Building robust, scalable, and responsive user interfaces
-                      using React, Next.js, and modern CSS frameworks like
-                      Tailwind. Ensuring cross-browser compatibility and peak
-                      performance.
+                      Crafting modern, pixel-perfect, and fully responsive UI/UX designs that captivate users and reflect your brand identity — from wireframe to polished interface.
                     </p>
                   </div>
 
-                  <div className="p-5 border border-orange-500/30 bg-orange-950/20 backdrop-blur-sm hover:border-orange-400/80 transition-all group relative overflow-hidden group">
+                  {/* Web Development */}
+                  <div className="p-5 border border-orange-500/30 bg-orange-950/20 backdrop-blur-sm hover:border-orange-400/80 transition-all group relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-orange-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                     <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-orange-500/30 opacity-0 group-hover:opacity-100 transition-all z-10 m-2"></div>
                     <h3 className="text-orange-300 text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2 border-b border-orange-500/30 pb-2 font-mono group-hover:text-white transition-colors">
-                      <span className="text-xl font-sans text-orange-500 group-hover:text-orange-300">
-                        {"[DB]"}
-                      </span>{" "}
-                      Backend & API Systems
+                      <span className="text-lg text-orange-500 group-hover:text-orange-300">{"</>"}</span> Web Development
                     </h3>
                     <p className="text-slate-400 text-xs leading-relaxed">
-                      Designing secure, fast server-side architectures using
-                      PHP, Laravel, and Node.js. Efficiently managing data flow
-                      with relational (MySQL) and NoSQL (MongoDB) databases.
+                      Building scalable, secure, and high-performance full-stack web applications using PHP, Laravel, Node.js, Vue.js, and React — backed by robust database architecture.
                     </p>
                   </div>
 
-                  <div className="p-5 border border-[#8b5cf6]/30 bg-purple-950/20 backdrop-blur-sm hover:border-[#8b5cf6]/80 transition-all group relative overflow-hidden sm:col-span-2 group">
+                  {/* Web Review */}
+                  <div className="p-5 border border-yellow-500/30 bg-yellow-950/20 backdrop-blur-sm hover:border-yellow-400/80 transition-all group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-yellow-500/30 opacity-0 group-hover:opacity-100 transition-all z-10 m-2"></div>
+                    <h3 className="text-yellow-300 text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2 border-b border-yellow-500/30 pb-2 font-mono group-hover:text-white transition-colors">
+                      <span className="text-lg text-yellow-500 group-hover:text-yellow-300">🔍</span> Web Review
+                    </h3>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                      Conducting comprehensive audits of existing websites — analyzing performance, SEO health, security, code quality, and UX — then delivering actionable improvement reports.
+                    </p>
+                  </div>
+
+                  {/* Mobile Application */}
+                  <div className="p-5 border border-green-500/30 bg-green-950/20 backdrop-blur-sm hover:border-green-400/80 transition-all group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-green-500/30 opacity-0 group-hover:opacity-100 transition-all z-10 m-2"></div>
+                    <h3 className="text-green-300 text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2 border-b border-green-500/30 pb-2 font-mono group-hover:text-white transition-colors">
+                      <span className="text-lg text-green-500 group-hover:text-green-300">📱</span> Mobile Application
+                    </h3>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                      Developing cross-platform mobile applications with smooth, native-like experiences using React Native — enabling businesses to reach users on both iOS and Android.
+                    </p>
+                  </div>
+
+                  {/* Digital Marketing */}
+                  <div className="p-5 border border-pink-500/30 bg-pink-950/20 backdrop-blur-sm hover:border-pink-400/80 transition-all group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-pink-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-pink-500/30 opacity-0 group-hover:opacity-100 transition-all z-10 m-2"></div>
+                    <h3 className="text-pink-300 text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2 border-b border-pink-500/30 pb-2 font-mono group-hover:text-white transition-colors">
+                      <span className="text-lg text-pink-500 group-hover:text-pink-300">📈</span> Digital Marketing
+                    </h3>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                      Strategizing and executing data-driven digital marketing campaigns — including SEO, social media growth, content strategy, and conversion optimization — to grow your online presence.
+                    </p>
+                  </div>
+
+                  {/* E-commerce Solution */}
+                  <div className="p-5 border border-[#8b5cf6]/30 bg-purple-950/20 backdrop-blur-sm hover:border-[#8b5cf6]/80 transition-all group relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                     <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#8b5cf6]/30 opacity-0 group-hover:opacity-100 transition-all z-10 m-2"></div>
                     <h3 className="text-[#ddd6fe] text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2 border-b border-[#8b5cf6]/30 pb-2 font-mono group-hover:text-white transition-colors">
-                      <span className="text-xl font-sans text-[#8b5cf6] group-hover:text-[#a78bfa]">
-                        {"⚙"}
-                      </span>{" "}
-                      Full-Stack Implementation
+                      <span className="text-lg text-[#8b5cf6] group-hover:text-[#a78bfa]">🛒</span> E-commerce Solution
                     </h3>
-                    <p className="text-slate-400 text-xs leading-relaxed max-w-[80%]">
-                      End-to-end development covering the whole lifecycle—from
-                      wireframing to database schema design, API integration,
-                      and final deployment. Bridging the gap between UI
-                      perfection and core logic.
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                      Building fully featured e-commerce platforms with secure payment integration, inventory management, order tracking, and optimized checkout flows that maximize conversions.
                     </p>
                   </div>
+
+                  </div>{/* end services grid */}
                 </motion.div>
               )}
             </div>

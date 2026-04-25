@@ -139,7 +139,7 @@ export default function ProjectDetailPage() {
         <div className="absolute inset-0 bg-purple-900/15 mix-blend-color z-[5]" />
         <img
           src={thumb(project.thumbnail_image)}
-          alt={project.title}
+          alt={project.title || project.name || "Project"}
           className="w-full h-full object-cover"
           onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
         />
@@ -188,7 +188,7 @@ export default function ProjectDetailPage() {
               </div>
 
               <h1 className="font-mono font-black text-2xl sm:text-3xl md:text-4xl text-white leading-tight mb-5">
-                {project.title}
+                {project.title || project.name}
               </h1>
 
               {/* Meta */}
@@ -456,14 +456,14 @@ export default function ProjectDetailPage() {
                         <div className="w-14 h-14 shrink-0 overflow-hidden border border-purple-500/10 group-hover:border-orange-400/30 transition-colors">
                           <img
                             src={thumb(p.thumbnail_image)}
-                            alt={p.title}
+                            alt={p.title || p.name || "Project"}
                             className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                             onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
                           />
                         </div>
                         <div className="min-w-0 flex flex-col justify-center">
                           <p className="font-mono text-xs text-white group-hover:text-purple-300 transition-colors line-clamp-2 leading-snug mb-1">
-                            {p.title}
+                            {p.title || p.name}
                           </p>
                           <span className="font-mono text-[9px] text-slate-700">{fmtDate(p.created_at, true)}</span>
                         </div>

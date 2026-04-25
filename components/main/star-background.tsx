@@ -12,9 +12,15 @@ import type { Points as PointsType } from "three";
 
 export const StarBackground = (props: PointsInstancesProps) => {
   const ref = useRef<PointsType | null>(null);
-  const [sphere] = useState(() =>
-    random.inSphere(new Float32Array(5000), { radius: 1.2 }),
-  );
+  const [sphere] = useState(() => {
+    // 4998 = 1666 × 3 — must be divisible by 3 so every vertex is complete
+    const arr = random.inSphere(new Float32Array(4998), { radius: 1.2 }) as Float32Array;
+    // maath can produce NaN; replace with 0 so computeBoundingSphere() never sees NaN
+    for (let i = 0; i < arr.length; i++) {
+      if (!isFinite(arr[i])) arr[i] = 0;
+    }
+    return arr;
+  });
 
   useFrame((_state, delta) => {
     if (ref.current) {
@@ -28,8 +34,8 @@ export const StarBackground = (props: PointsInstancesProps) => {
       <Points
         ref={ref}
         stride={3}
-        positions={new Float32Array(sphere)}
-        frustumCulled
+        positions={sphere}
+        frustumCulled={false}
         {...props}
       >
         <PointMaterial

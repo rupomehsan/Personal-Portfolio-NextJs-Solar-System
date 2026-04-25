@@ -2,7 +2,8 @@ import { API_CONFIG } from "@/config/api";
 
 export interface Project {
   id: number;
-  title: string;
+  title?: string;
+  name?: string;
   description: string;
   content: string | null;
   slug: string;

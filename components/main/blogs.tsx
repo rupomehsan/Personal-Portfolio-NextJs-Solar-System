@@ -124,15 +124,45 @@ export const Blogs = () => {
       {/* ── Blog list ── */}
       <div className="w-full max-w-[1200px] px-4 md:px-10 mt-32 sm:mt-40 z-20 relative">
 
-        {/* Loading */}
+        {/* Skeleton */}
         {loading && (
-          <div className="flex flex-col items-center gap-4 py-20 font-mono text-cyan-400">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full"
-            />
-            <span className="text-xs tracking-widest animate-pulse">FETCHING_LOGS...</span>
+          <div className="flex flex-col gap-6 sm:gap-10">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-[#0b1426]/90 border border-cyan-500/10 flex flex-col md:flex-row relative overflow-hidden"
+              >
+                <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-cyan-500/20 m-2" />
+                <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-cyan-500/20 m-2" />
+
+                {/* Left panel */}
+                <div className="md:w-[250px] lg:w-[320px] bg-black/40 border-b md:border-b-0 md:border-r border-cyan-500/10 p-4 sm:p-6 flex flex-col gap-3 shrink-0">
+                  <div className="h-2.5 w-24 bg-slate-700/40 animate-pulse rounded-sm" style={{ animationDelay: `${i * 120}ms` }} />
+                  <div className="h-6 w-36 bg-slate-700/50 animate-pulse rounded-sm" style={{ animationDelay: `${i * 120 + 40}ms` }} />
+                  <div className="h-2.5 w-20 bg-slate-800/60 animate-pulse rounded-sm" style={{ animationDelay: `${i * 120 + 80}ms` }} />
+                  <div className="w-full h-[100px] md:h-[120px] bg-slate-800/50 animate-pulse mt-2" style={{ animationDelay: `${i * 120}ms` }} />
+                  <div className="h-5 w-28 bg-slate-800/40 animate-pulse" style={{ animationDelay: `${i * 120 + 60}ms` }} />
+                </div>
+
+                {/* Right panel */}
+                <div className="flex-1 p-5 sm:p-8 flex flex-col justify-center gap-4">
+                  <div className="space-y-2.5">
+                    <div className="h-5 w-3/4 bg-slate-700/50 animate-pulse rounded-sm" style={{ animationDelay: `${i * 120 + 40}ms` }} />
+                    <div className="h-5 w-1/2 bg-slate-700/40 animate-pulse rounded-sm" style={{ animationDelay: `${i * 120 + 80}ms` }} />
+                  </div>
+                  <div className="space-y-2 border-l-2 border-cyan-500/10 pl-4">
+                    {[1, 0.9, 0.8, 0.7].map((w, j) => (
+                      <div
+                        key={j}
+                        className="h-2.5 bg-slate-800/50 animate-pulse rounded-sm"
+                        style={{ width: `${w * 100}%`, animationDelay: `${i * 120 + j * 40}ms` }}
+                      />
+                    ))}
+                  </div>
+                  <div className="h-8 w-36 bg-slate-800/40 animate-pulse border border-slate-700/30" style={{ animationDelay: `${i * 120}ms` }} />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
