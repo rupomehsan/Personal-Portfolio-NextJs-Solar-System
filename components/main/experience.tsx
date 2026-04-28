@@ -80,8 +80,31 @@ export const Skills = () => {
   return (
     <section
       id="experience"
-      className="flex flex-col items-center justify-center gap-10 h-full relative overflow-hidden py-20 z-20 min-h-screen"
+      className="flex flex-col items-center justify-center gap-10 h-full relative overflow-hidden py-20 z-20 min-h-screen w-full max-w-[1400px] mx-auto"
     >
+      {/* HUD Frame Borders */}
+      <div className="absolute inset-4 pointer-events-none hidden md:block z-10">
+        <svg width="80" height="80" className="absolute top-0 left-0 opacity-60">
+          <path d="M 80 2 L 20 2 L 2 20 L 2 80" fill="none" stroke="#38bdf8" strokeWidth="2" />
+          <path d="M 80 8 L 25 8 L 8 25 L 8 80" fill="none" stroke="#38bdf8" strokeWidth="1" strokeOpacity="0.5" />
+        </svg>
+        <svg width="80" height="80" className="absolute top-0 right-0 opacity-60">
+          <path d="M 0 2 L 60 2 L 78 20 L 78 80" fill="none" stroke="#38bdf8" strokeWidth="2" />
+          <path d="M 0 8 L 55 8 L 72 25 L 72 80" fill="none" stroke="#38bdf8" strokeWidth="1" strokeOpacity="0.5" />
+        </svg>
+        <svg width="80" height="80" className="absolute bottom-0 left-0 opacity-60">
+          <path d="M 80 78 L 20 78 L 2 60 L 2 0" fill="none" stroke="#38bdf8" strokeWidth="2" />
+          <path d="M 80 72 L 25 72 L 8 55 L 8 0" fill="none" stroke="#38bdf8" strokeWidth="1" strokeOpacity="0.5" />
+        </svg>
+        <svg width="80" height="80" className="absolute bottom-0 right-0 opacity-60">
+          <path d="M 0 78 L 60 78 L 78 60 L 78 0" fill="none" stroke="#38bdf8" strokeWidth="2" />
+          <path d="M 0 72 L 55 72 L 72 55 L 72 0" fill="none" stroke="#38bdf8" strokeWidth="1" strokeOpacity="0.5" />
+        </svg>
+        <div className="absolute top-[1px] left-[80px] right-[80px] h-[1px] bg-cyan-500/20" />
+        <div className="absolute bottom-[1px] left-[80px] right-[80px] h-[1px] bg-cyan-500/20" />
+        <div className="absolute left-[1px] top-[80px] bottom-[80px] w-[1px] bg-cyan-500/20" />
+        <div className="absolute right-[1px] top-[80px] bottom-[80px] w-[1px] bg-cyan-500/20" />
+      </div>
       <div className="absolute w-auto h-auto top-[5%] sm:top-[10%] z-[5]">
         <div className="flex flex-col items-center mb-6 md:mb-10 w-full relative">
           {/* Top Animated Line */}

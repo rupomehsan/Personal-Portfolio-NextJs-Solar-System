@@ -20,7 +20,7 @@ export const API_CONFIG = {
     },
     projects: {
       getAll: `${BASE_URL}/api/get-all-projects`,
-      getOne: `${BASE_URL}/api/get-project`,         // GET /{slug} — update if route differs
+      getOne: `${BASE_URL}/api/get-single-projects`,
     },
     marketplaces: {
       getAll: `${BASE_URL}/api/get-all-projects`, // Reusing projects endpt for now, or you can specify actual
@@ -29,6 +29,10 @@ export const API_CONFIG = {
     comments: {
       getByBlog: `${BASE_URL}/api/get-blog-comments`,
       create: `${BASE_URL}/api/post-blog-comment`,
+    },
+    projectComments: {
+      get: `${BASE_URL}/api/get-projects-comments`,
+      submit: `${BASE_URL}/api/submit-project-comment`,
     },
   },
 

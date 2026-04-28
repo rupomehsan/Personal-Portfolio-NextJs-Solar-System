@@ -3,7 +3,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getAllProjects, parseTags, type Project } from "@/lib/services/project";
+import {
+  getAllProjects,
+  parseTags,
+  type Project,
+} from "@/lib/services/project";
 import { API_CONFIG } from "@/config/api";
 
 const DUMMY_IMG =
@@ -14,13 +18,24 @@ const INITIAL_VISIBLE = 6;
 function thumb(path: string | null): string {
   if (!path) return DUMMY_IMG;
   if (path.startsWith("http")) return path;
-  return `${API_CONFIG.baseUrl}/storage/${path}`;
+  return `${API_CONFIG.baseUrl}/${path}`;
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export const Projects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     getAllProjects()
@@ -34,8 +49,91 @@ export const Projects = () => {
   return (
     <section
       id="projects"
-      className="flex flex-col items-center justify-center gap-10 h-full relative overflow-hidden py-20 z-20 min-h-screen"
+      className="flex flex-col items-center justify-center gap-10 h-full relative overflow-hidden py-20 z-20 min-h-screen w-full max-w-[1400px] mx-auto"
     >
+      {/* HUD Frame Borders */}
+      <div className="absolute inset-4 pointer-events-none hidden md:block z-10">
+        <svg
+          width="80"
+          height="80"
+          className="absolute top-0 left-0 opacity-60"
+        >
+          <path
+            d="M 80 2 L 20 2 L 2 20 L 2 80"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="2"
+          />
+          <path
+            d="M 80 8 L 25 8 L 8 25 L 8 80"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="1"
+            strokeOpacity="0.5"
+          />
+        </svg>
+        <svg
+          width="80"
+          height="80"
+          className="absolute top-0 right-0 opacity-60"
+        >
+          <path
+            d="M 0 2 L 60 2 L 78 20 L 78 80"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="2"
+          />
+          <path
+            d="M 0 8 L 55 8 L 72 25 L 72 80"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="1"
+            strokeOpacity="0.5"
+          />
+        </svg>
+        <svg
+          width="80"
+          height="80"
+          className="absolute bottom-0 left-0 opacity-60"
+        >
+          <path
+            d="M 80 78 L 20 78 L 2 60 L 2 0"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="2"
+          />
+          <path
+            d="M 80 72 L 25 72 L 8 55 L 8 0"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="1"
+            strokeOpacity="0.5"
+          />
+        </svg>
+        <svg
+          width="80"
+          height="80"
+          className="absolute bottom-0 right-0 opacity-60"
+        >
+          <path
+            d="M 0 78 L 60 78 L 78 60 L 78 0"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="2"
+          />
+          <path
+            d="M 0 72 L 55 72 L 72 55 L 72 0"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="1"
+            strokeOpacity="0.5"
+          />
+        </svg>
+        <div className="absolute top-[1px] left-[80px] right-[80px] h-[1px] bg-cyan-500/20" />
+        <div className="absolute bottom-[1px] left-[80px] right-[80px] h-[1px] bg-cyan-500/20" />
+        <div className="absolute left-[1px] top-[80px] bottom-[80px] w-[1px] bg-cyan-500/20" />
+        <div className="absolute right-[1px] top-[80px] bottom-[80px] w-[1px] bg-cyan-500/20" />
+      </div>
       {/* ── Section heading ── */}
       <div className="absolute w-auto h-auto top-[2%] sm:top-[5%] z-[5]">
         <div className="flex flex-col items-center mb-6 md:mb-10 w-full relative">
@@ -44,7 +142,8 @@ export const Projects = () => {
             <div className="w-[50%] h-full bg-[#22d3ee] shadow-[0_0_10px_rgba(34,211,238,0.8)] relative z-10"></div>
             <div className="w-[35%] h-full bg-teal-900/60 relative z-10"></div>
             <motion.div
-              initial={{ x: "-100%" }} animate={{ x: "600%" }}
+              initial={{ x: "-100%" }}
+              animate={{ x: "600%" }}
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
               className="absolute top-0 left-0 w-[40px] h-full bg-white/80 blur-[3px] z-20"
             />
@@ -64,12 +163,16 @@ export const Projects = () => {
                   viewport={{ once: true }}
                   className="text-white font-sans"
                 >
-                  {char === "E" ? "Ξ" : char === "O" ? (
+                  {char === "E" ? (
+                    "Ξ"
+                  ) : char === "O" ? (
                     <span className="relative inline-flex items-center justify-center">
                       O
                       <span className="absolute w-[4px] sm:w-[6px] h-[4px] sm:h-[6px] bg-cyan-400 rounded-full shadow-[0_0_10px_rgba(34,211,238,1)]" />
                     </span>
-                  ) : char}
+                  ) : (
+                    char
+                  )}
                 </motion.span>
               ))}
               <motion.span
@@ -86,8 +189,14 @@ export const Projects = () => {
             <div className="w-[10%] h-full bg-[#a78bfa] relative z-10"></div>
             <div className="w-[30%] h-full bg-teal-900/60 relative z-10"></div>
             <motion.div
-              initial={{ x: "-100%" }} animate={{ x: "600%" }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear", delay: 1 }}
+              initial={{ x: "-100%" }}
+              animate={{ x: "600%" }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "linear",
+                delay: 1,
+              }}
               className="absolute top-0 left-0 w-[40px] h-full bg-white/80 blur-[3px] z-20"
             />
           </div>
@@ -96,7 +205,6 @@ export const Projects = () => {
 
       {/* ── Grid ── */}
       <div className="w-full max-w-[1400px] px-4 md:px-10 mt-32 sm:mt-40 z-20 relative">
-
         {/* Skeleton */}
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
@@ -104,41 +212,75 @@ export const Projects = () => {
               <div key={i} className="relative h-full flex flex-col">
                 <div
                   className="relative h-full flex flex-col bg-[#0b1426]/90 border border-cyan-500/10 p-4 sm:p-5"
-                  style={{ clipPath: "polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,20px 100%,0 calc(100% - 20px))" }}
+                  style={{
+                    clipPath:
+                      "polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,20px 100%,0 calc(100% - 20px))",
+                  }}
                 >
                   <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-cyan-500/20 m-2" />
                   <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-cyan-500/20 m-2" />
 
                   {/* header row */}
                   <div className="flex items-center justify-between mb-3 border-b border-cyan-500/10 pb-2">
-                    <div className="h-2.5 w-16 bg-slate-700/50 animate-pulse rounded-sm" style={{ animationDelay: `${i * 80}ms` }} />
-                    <div className="h-2.5 w-12 bg-slate-700/30 animate-pulse rounded-sm" style={{ animationDelay: `${i * 80 + 40}ms` }} />
+                    <div
+                      className="h-2.5 w-16 bg-slate-700/50 animate-pulse rounded-sm"
+                      style={{ animationDelay: `${i * 80}ms` }}
+                    />
+                    <div
+                      className="h-2.5 w-12 bg-slate-700/30 animate-pulse rounded-sm"
+                      style={{ animationDelay: `${i * 80 + 40}ms` }}
+                    />
                   </div>
 
                   {/* thumbnail */}
-                  <div className="w-full h-[150px] sm:h-[180px] mb-4 bg-slate-800/50 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+                  <div
+                    className="w-full h-[150px] sm:h-[180px] mb-4 bg-slate-800/50 animate-pulse"
+                    style={{ animationDelay: `${i * 80}ms` }}
+                  />
 
                   {/* title */}
-                  <div className="h-4 w-3/4 bg-slate-700/50 animate-pulse rounded-sm mb-2" style={{ animationDelay: `${i * 80 + 40}ms` }} />
+                  <div
+                    className="h-4 w-3/4 bg-slate-700/50 animate-pulse rounded-sm mb-2"
+                    style={{ animationDelay: `${i * 80 + 40}ms` }}
+                  />
 
                   {/* description lines */}
                   <div className="space-y-2 mb-4 border-l-2 border-cyan-500/10 pl-3 flex-grow">
-                    <div className="h-2.5 w-full bg-slate-800/50 animate-pulse rounded-sm" style={{ animationDelay: `${i * 80}ms` }} />
-                    <div className="h-2.5 w-5/6 bg-slate-800/50 animate-pulse rounded-sm" style={{ animationDelay: `${i * 80 + 60}ms` }} />
-                    <div className="h-2.5 w-2/3 bg-slate-800/50 animate-pulse rounded-sm" style={{ animationDelay: `${i * 80 + 120}ms` }} />
+                    <div
+                      className="h-2.5 w-full bg-slate-800/50 animate-pulse rounded-sm"
+                      style={{ animationDelay: `${i * 80}ms` }}
+                    />
+                    <div
+                      className="h-2.5 w-5/6 bg-slate-800/50 animate-pulse rounded-sm"
+                      style={{ animationDelay: `${i * 80 + 60}ms` }}
+                    />
+                    <div
+                      className="h-2.5 w-2/3 bg-slate-800/50 animate-pulse rounded-sm"
+                      style={{ animationDelay: `${i * 80 + 120}ms` }}
+                    />
                   </div>
 
                   {/* tags */}
                   <div className="flex gap-1.5 mb-3">
                     {[10, 14, 10].map((w, j) => (
-                      <div key={j} className={`h-4 w-${w} bg-slate-800/50 animate-pulse`} style={{ animationDelay: `${i * 80 + j * 30}ms` }} />
+                      <div
+                        key={j}
+                        className={`h-4 w-${w} bg-slate-800/50 animate-pulse`}
+                        style={{ animationDelay: `${i * 80 + j * 30}ms` }}
+                      />
                     ))}
                   </div>
 
                   {/* buttons */}
                   <div className="flex gap-2">
-                    <div className="flex-1 h-8 bg-slate-800/40 animate-pulse border border-slate-700/30" style={{ animationDelay: `${i * 80}ms` }} />
-                    <div className="flex-1 h-8 bg-slate-800/40 animate-pulse border border-slate-700/30" style={{ animationDelay: `${i * 80 + 40}ms` }} />
+                    <div
+                      className="flex-1 h-8 bg-slate-800/40 animate-pulse border border-slate-700/30"
+                      style={{ animationDelay: `${i * 80}ms` }}
+                    />
+                    <div
+                      className="flex-1 h-8 bg-slate-800/40 animate-pulse border border-slate-700/30"
+                      style={{ animationDelay: `${i * 80 + 40}ms` }}
+                    />
                   </div>
                 </div>
               </div>
@@ -149,7 +291,9 @@ export const Projects = () => {
         {/* Error */}
         {!loading && error && (
           <div className="flex flex-col items-center gap-3 py-16 font-mono text-orange-400 border border-orange-500/30 bg-orange-500/5 p-8">
-            <span className="text-xs tracking-widest uppercase">[ERROR] {error}</span>
+            <span className="text-xs tracking-widest uppercase">
+              [ERROR] {error}
+            </span>
           </div>
         )}
 
@@ -160,7 +304,8 @@ export const Projects = () => {
               <AnimatePresence>
                 {visible.map((project, index) => {
                   const tags = parseTags(project.tags);
-                  const liveUrl = project.project_url ?? project.github_url ?? "";
+                  const liveUrl =
+                    project.link ?? project.project_url ?? project.github_url ?? "";
 
                   return (
                     <motion.div
@@ -175,7 +320,10 @@ export const Projects = () => {
 
                       <div
                         className="relative h-full flex flex-col bg-[#0b1426]/90 backdrop-blur-xl border border-cyan-500/30 p-4 sm:p-5 transition-all duration-300 group-hover:border-cyan-400 group-hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]"
-                        style={{ clipPath: "polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px))" }}
+                        style={{
+                          clipPath:
+                            "polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px))",
+                        }}
                       >
                         <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-cyan-500/70 m-2 z-10" />
                         <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-cyan-500/70 m-2 z-10" />
@@ -196,15 +344,19 @@ export const Projects = () => {
                         {/* Thumbnail */}
                         <div className="relative w-full h-[150px] sm:h-[180px] mb-4 overflow-hidden border border-cyan-500/20 group-hover:border-cyan-400/50 transition-colors z-10">
                           <img
-                            src={thumb(project.thumbnail_image)}
+                            src={thumb(project.thumb_image)}
                             alt={project.title || project.name || "Project"}
-                            className="w-full h-full object-cover mix-blend-luminosity opacity-70 group-hover:mix-blend-normal group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out"
-                            onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
+                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = DUMMY_IMG;
+                            }}
                           />
                           <div className="absolute inset-0 bg-cyan-900/20 mix-blend-overlay group-hover:opacity-0 transition-opacity duration-500" />
                           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(6,182,212,0.1)_51%)] bg-[length:100%_4px] pointer-events-none" />
                           {project.is_featured === 1 && (
-                            <span className="absolute top-2 right-2 z-10 px-2 py-0.5 bg-orange-500/85 font-mono text-[8px] text-white uppercase tracking-widest">★ FEATURED</span>
+                            <span className="absolute top-2 right-2 z-10 px-2 py-0.5 bg-orange-500/85 font-mono text-[8px] text-white uppercase tracking-widest">
+                              ★ FEATURED
+                            </span>
                           )}
                         </div>
 
@@ -212,8 +364,8 @@ export const Projects = () => {
                         <h3 className="text-base sm:text-lg font-bold font-mono text-white mb-2 group-hover:text-cyan-300 transition-colors relative z-10">
                           {project.title || project.name}
                         </h3>
-                        <p className="text-slate-400 text-xs sm:text-sm font-mono leading-relaxed mb-4 flex-grow border-l-2 border-cyan-500/30 pl-3">
-                          {project.description}
+                        <p className="text-slate-400 text-xs sm:text-sm font-mono leading-relaxed mb-4 flex-grow border-l-2 border-cyan-500/30 pl-3 line-clamp-3">
+                          {stripHtml(project.description)}
                         </p>
 
                         {/* Footer */}
@@ -221,7 +373,10 @@ export const Projects = () => {
                           {tags.length > 0 && (
                             <div className="flex flex-wrap gap-1.5">
                               {tags.slice(0, 5).map((tag, i) => (
-                                <span key={i} className="text-[9px] font-mono uppercase bg-cyan-950/40 text-cyan-200 px-2 py-0.5 border border-cyan-500/20 group-hover:border-cyan-500/50">
+                                <span
+                                  key={i}
+                                  className="text-[9px] font-mono uppercase bg-cyan-950/40 text-cyan-200 px-2 py-0.5 border border-cyan-500/20 group-hover:border-cyan-500/50"
+                                >
                                   {tag}
                                 </span>
                               ))}
@@ -229,24 +384,61 @@ export const Projects = () => {
                           )}
 
                           <div className="flex flex-row items-center gap-2">
-                            <Link href={`/projects/${project.slug}`} className="flex-1">
+                            <Link
+                              href={`/projects/${project.slug}`}
+                              className="flex-1"
+                            >
                               <button className="w-full px-3 py-1.5 border border-purple-500/40 text-purple-300 font-mono text-[9px] sm:text-[10px] uppercase tracking-widest hover:bg-purple-500/20 hover:border-purple-400 hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all flex items-center gap-1.5 justify-center relative overflow-hidden group/btn2">
                                 <div className="absolute inset-0 w-0 bg-gradient-to-r from-transparent via-purple-400/20 to-transparent group-hover/btn2:w-full transition-all duration-500 z-0" />
-                                <span className="relative z-10">View Details</span>
-                                <svg className="w-2.5 h-2.5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                <span className="relative z-10">
+                                  View Details
+                                </span>
+                                <svg
+                                  className="w-2.5 h-2.5 relative z-10"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                  />
                                 </svg>
                               </button>
                             </Link>
 
                             {liveUrl ? (
-                              <Link href={liveUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+                              <Link
+                                href={liveUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1"
+                              >
                                 <button className="w-full px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/40 text-cyan-300 font-mono text-[9px] sm:text-[10px] uppercase tracking-widest hover:bg-cyan-500/30 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all flex items-center gap-1.5 justify-center relative overflow-hidden group/btn">
                                   <div className="absolute inset-0 w-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent group-hover/btn:w-full transition-all duration-500 z-0" />
-                                  <span className="relative z-10">&gt; Execute</span>
-                                  <svg className="w-2.5 h-2.5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  <span className="relative z-10">
+                                    &gt; Execute
+                                  </span>
+                                  <svg
+                                    className="w-2.5 h-2.5 relative z-10"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                    />
                                   </svg>
                                 </button>
                               </Link>
@@ -275,7 +467,10 @@ export const Projects = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="group relative px-8 py-3 bg-[#0b1426]/90 border border-cyan-500/50 backdrop-blur-md overflow-hidden text-cyan-300 font-mono text-xs uppercase tracking-widest hover:text-white cursor-pointer"
-                    style={{ clipPath: "polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)" }}
+                    style={{
+                      clipPath:
+                        "polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)",
+                    }}
                   >
                     <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/15 transition-colors duration-300" />
                     <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
@@ -283,10 +478,22 @@ export const Projects = () => {
                     <div className="flex items-center gap-3 relative z-10">
                       <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
                       VIEW_ALL_PROJECTS
-                      <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      <svg
+                        className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M14 5l7 7m0 0l-7 7m7-7H3"
+                        />
                       </svg>
-                      <span className="text-slate-600 ml-1 text-[10px]">[ {projects.length}_MODULES ]</span>
+                      <span className="text-slate-600 ml-1 text-[10px]">
+                        [ {projects.length}_MODULES ]
+                      </span>
                     </div>
                   </motion.div>
                 </Link>

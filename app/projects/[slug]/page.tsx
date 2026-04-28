@@ -22,13 +22,48 @@ function fmtDate(s: string | null | undefined, short = false) {
   if (isNaN(d.getTime())) return s;
   return short
     ? `${String(d.getDate()).padStart(2, "0")} ${d.toLocaleString("en-US", { month: "short" })}`
-    : d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    : d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
 }
 
 function thumb(p: string | null) {
   if (!p) return DUMMY_IMG;
   if (p.startsWith("http")) return p;
-  return `${API_CONFIG.baseUrl}/storage/${p}`;
+  return `${API_CONFIG.baseUrl}/${p}`;
+}
+
+interface ProjectComment {
+  id: number;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  comment: string;
+  created_at: string;
+  replies?: ProjectComment[];
+}
+
+function parseImages(raw: string[] | string | null): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  try {
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function toHTML(content: string | null): string {
@@ -47,30 +82,132 @@ function toHTML(content: string | null): string {
 export default function ProjectDetailPage() {
   const { slug } = useParams<{ slug: string }>();
 
-  const [project, setProject]         = useState<Project | null>(null);
-  const [related, setRelated]         = useState<Project[]>([]);
-  const [categories, setCategories]   = useState<{ type: string; count: number }[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState<string | null>(null);
-  const [readProgress, setProgress]   = useState(0);
+  const [project, setProject] = useState<Project | null>(null);
+  const [related, setRelated] = useState<Project[]>([]);
+  const [categories, setCategories] = useState<
+    { type: string; count: number }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [readProgress, setProgress] = useState(0);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [liked, setLiked]             = useState(false);
+  const [comments, setComments] = useState<ProjectComment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    comment: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    getAllProjects()
-      .then((all) => {
-        const found = all.find((p) => p.slug === slug);
-        if (!found) throw new Error(`Project "${slug}" not found`);
-        setProject(found);
-        setCategories(extractProjectCategories(all));
-        setRelated(
-          all
-            .filter((p) => p.slug !== slug)
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .slice(0, 5)
+    async function load() {
+      try {
+        // 1. Fetch single project directly
+        const res = await fetch(
+          `${API_CONFIG.baseUrl}/api/get-single-projects/${slug}`,
+          { headers: { Accept: "application/json" }, cache: "no-store" }
         );
-      })
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+        const json = await res.json();
+
+        // Handle: {data:{id,...}}, {data:{data:[{id,...}]}}, or raw object
+        const found: Project =
+          json?.data?.id        ? json.data :
+          json?.data?.data?.id  ? json.data.data :
+          json?.id              ? json : null;
+
+        if (!found?.id) throw new Error(`Project "${slug}" not found`);
+        setProject(found);
+        fetchComments(found.id);
+
+        // 2. Load sidebar data independently (non-blocking for main project)
+        getAllProjects()
+          .then((all) => {
+            setCategories(extractProjectCategories(all));
+            setRelated(
+              all
+                .filter((p) => p.slug !== slug)
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, 5),
+            );
+          })
+          .catch(() => { /* sidebar degrades silently */ });
+      } catch (e) {
+        setError((e as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, [slug]);
+
+  async function fetchComments(projectId: number) {
+    setCommentsLoading(true);
+    try {
+      const res = await fetch(
+        `${API_CONFIG.baseUrl}/api/get-projects-comments/${projectId}`,
+        {
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        },
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      const list: ProjectComment[] = Array.isArray(json.data?.data)
+        ? json.data.data
+        : Array.isArray(json.data)
+          ? json.data
+          : Array.isArray(json)
+            ? json
+            : [];
+      setComments(list);
+    } catch {
+      /* silent */
+    } finally {
+      setCommentsLoading(false);
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!project) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch(
+        `${API_CONFIG.baseUrl}/api/submit-project-comment/${project.id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ ...form, project_id: project.id }),
+        },
+      );
+      const json = await res.json();
+      if (!res.ok) {
+        const msg = json?.message ?? json?.error ?? "Submission failed.";
+        setSubmitError(msg);
+        setSubmitStatus("error");
+        return;
+      }
+      setSubmitStatus("success");
+      setForm({ name: "", email: "", phone: "", comment: "" });
+      fetchComments(project.id);
+    } catch {
+      setSubmitError("Network error. Try again.");
+      setSubmitStatus("error");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   useEffect(() => {
     const el = document.documentElement;
@@ -82,45 +219,57 @@ export default function ProjectDetailPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const tags       = parseTags(project?.tags ?? null);
-  const techStack  = project?.technology
-    ? project.technology.split(",").map((t) => t.trim()).filter(Boolean)
+  const tags = parseTags(project?.tags ?? null);
+  const techStack = project?.technology
+    ? project.technology
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
     : [];
+  const extraImages = parseImages(project?.images ?? null);
+  const liveUrl = project?.link ?? project?.project_url ?? null;
 
   /* ── Loading ── */
-  if (loading) return (
-    <main className="min-h-screen bg-[#030014] flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4 font-mono text-purple-400">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
-          className="w-10 h-10 border-2 border-purple-500/20 border-t-purple-400 rounded-full"
-        />
-        <span className="text-xs tracking-widest animate-pulse">LOADING_MODULE...</span>
-      </div>
-    </main>
-  );
+  if (loading)
+    return (
+      <main className="min-h-screen bg-[#030014] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 font-mono text-purple-400">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+            className="w-10 h-10 border-2 border-purple-500/20 border-t-purple-400 rounded-full"
+          />
+          <span className="text-xs tracking-widest animate-pulse">
+            LOADING_MODULE...
+          </span>
+        </div>
+      </main>
+    );
 
   /* ── Error ── */
-  if (error || !project) return (
-    <main className="min-h-screen bg-[#030014] flex items-center justify-center px-6">
-      <div className="text-center font-mono space-y-4">
-        <div className="text-7xl font-black text-slate-800/60">404</div>
-        <div className="text-purple-400 text-sm tracking-widest">[MODULE_NOT_FOUND]</div>
-        <p className="text-slate-600 text-xs max-w-xs">{error ?? "The requested project does not exist."}</p>
-        <Link href="/projects">
-          <button className="mt-4 px-6 py-2 border border-purple-500/40 text-purple-400 text-xs uppercase tracking-widest hover:bg-purple-500/10 transition-colors">
-            &lt; RETURN_TO_MODULES
-          </button>
-        </Link>
-      </div>
-    </main>
-  );
+  if (error || !project)
+    return (
+      <main className="min-h-screen bg-[#030014] flex items-center justify-center px-6">
+        <div className="text-center font-mono space-y-4">
+          <div className="text-7xl font-black text-slate-800/60">404</div>
+          <div className="text-purple-400 text-sm tracking-widest">
+            [MODULE_NOT_FOUND]
+          </div>
+          <p className="text-slate-600 text-xs max-w-xs">
+            {error ?? "The requested project does not exist."}
+          </p>
+          <Link href="/projects">
+            <button className="mt-4 px-6 py-2 border border-purple-500/40 text-purple-400 text-xs uppercase tracking-widest hover:bg-purple-500/10 transition-colors">
+              &lt; RETURN_TO_MODULES
+            </button>
+          </Link>
+        </div>
+      </main>
+    );
 
   /* ── Project detail ── */
   return (
     <main className="min-h-screen bg-[#030014] relative overflow-x-hidden">
-
       {/* Reading progress */}
       <div className="fixed top-0 left-0 right-0 z-[60] h-[2px] bg-slate-900/80">
         <div
@@ -138,10 +287,12 @@ export default function ProjectDetailPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-[#030014] z-10" />
         <div className="absolute inset-0 bg-purple-900/15 mix-blend-color z-[5]" />
         <img
-          src={thumb(project.thumbnail_image)}
+          src={thumb(project.thumb_image)}
           alt={project.title || project.name || "Project"}
           className="w-full h-full object-cover"
-          onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = DUMMY_IMG;
+          }}
         />
 
         {/* Breadcrumb inside hero */}
@@ -151,11 +302,20 @@ export default function ProjectDetailPage() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-2 font-mono text-[11px] text-slate-400"
           >
-            <Link href="/" className="hover:text-purple-400 transition-colors">root@sys:~</Link>
+            <Link href="/" className="hover:text-purple-400 transition-colors">
+              root@sys:~
+            </Link>
             <span className="text-slate-700">/</span>
-            <Link href="/projects" className="hover:text-purple-400 transition-colors">projects</Link>
+            <Link
+              href="/projects"
+              className="hover:text-purple-400 transition-colors"
+            >
+              projects
+            </Link>
             <span className="text-slate-700">/</span>
-            <span className="text-purple-400 truncate max-w-[200px] sm:max-w-none">{project.slug}</span>
+            <span className="text-purple-400 truncate max-w-[200px] sm:max-w-none">
+              {project.slug}
+            </span>
           </motion.div>
         </div>
       </div>
@@ -163,12 +323,14 @@ export default function ProjectDetailPage() {
       {/* ── Main wrapper ── */}
       <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 -mt-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-
           {/* ════ LEFT: article ════ */}
           <article className="lg:col-span-8 min-w-0">
-
             {/* Title block */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
+            >
               {/* Badges */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {project.category && (
@@ -187,24 +349,74 @@ export default function ProjectDetailPage() {
                 </span>
               </div>
 
-              <h1 className="font-mono font-black text-2xl sm:text-3xl md:text-4xl text-white leading-tight mb-5">
-                {project.title || project.name}
-              </h1>
+              <div className="flex items-start justify-between gap-4 mb-5">
+                <h1 className="font-mono font-black text-2xl sm:text-3xl md:text-4xl text-white leading-tight">
+                  {project.title || project.name}
+                </h1>
+                <div className="flex items-center gap-2 mt-1 shrink-0">
+                  {liveUrl && (
+                    <a
+                      href={liveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-purple-500/10 border border-purple-500/40 text-purple-300 font-mono text-[10px] uppercase tracking-widest hover:bg-purple-500/20 hover:border-purple-400 hover:shadow-[0_0_14px_rgba(168,85,247,0.3)] transition-all"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      VISIT
+                    </a>
+                  )}
+                  <button
+                    onClick={() => setLiked((v) => !v)}
+                    className={`flex items-center gap-1.5 px-3 py-2 border font-mono text-[10px] uppercase tracking-widest transition-all ${
+                      liked
+                        ? "bg-rose-500/20 border-rose-500/60 text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.25)]"
+                        : "bg-slate-900/40 border-slate-700/50 text-slate-500 hover:border-rose-500/40 hover:text-rose-400"
+                    }`}
+                  >
+                    <svg className="w-3.5 h-3.5" fill={liked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    {liked ? "LIKED" : "LIKE"}
+                  </button>
+                </div>
+              </div>
 
               {/* Meta */}
               <div className="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs text-slate-600 pb-5 border-b border-slate-800/60">
                 {project.start_date && (
                   <span className="flex items-center gap-1.5">
-                    <svg className="w-3 h-3 text-purple-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg
+                      className="w-3 h-3 text-purple-800"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
                     </svg>
                     START: {fmtDate(project.start_date)}
                   </span>
                 )}
                 {project.end_date && (
                   <span className="flex items-center gap-1.5">
-                    <svg className="w-3 h-3 text-purple-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="w-3 h-3 text-purple-800"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     END: {fmtDate(project.end_date)}
                   </span>
@@ -216,15 +428,105 @@ export default function ProjectDetailPage() {
               </div>
             </motion.div>
 
-            {/* Description lead */}
-            <motion.p
+            {/* Description + vertical image strip */}
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.15 }}
-              className="font-mono text-slate-300 text-sm sm:text-[15px] leading-relaxed border-l-2 border-purple-500/35 pl-5 mb-10 italic"
+              className="flex gap-0 mb-10"
             >
-              {project.description}
-            </motion.p>
+              {/* Left: vertical image strip */}
+              {extraImages.length > 0 && (
+                <div className="flex flex-col gap-2 w-[80px] sm:w-[96px] shrink-0 pr-4 border-r border-purple-500/25 mr-5">
+                  <span className="font-mono text-[8px] text-slate-700 uppercase tracking-widest mb-1">
+                    {extraImages.length} IMG
+                  </span>
+                  {extraImages.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setLightboxIdx(i)}
+                      className="w-full aspect-video overflow-hidden border border-purple-500/20 hover:border-purple-400/60 transition-colors group relative"
+                    >
+                      <img
+                        src={thumb(img)}
+                        alt={`Screenshot ${i + 1}`}
+                        className="w-full h-full object-cover opacity-75 group-hover:opacity-100 group-hover:scale-105 transition-all duration-400"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = DUMMY_IMG;
+                        }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50">
+                        <svg
+                          className="w-4 h-4 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          />
+                        </svg>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {/* Right: description */}
+              <p className="flex-1 font-mono text-slate-300 text-sm sm:text-[15px] leading-relaxed italic">
+                {stripHtml(project.description)}
+              </p>
+            </motion.div>
+
+            {/* Lightbox */}
+            {lightboxIdx !== null && (
+              <div
+                className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4"
+                onClick={() => setLightboxIdx(null)}
+              >
+                <button
+                  className="absolute top-4 right-5 font-mono text-slate-400 hover:text-white text-xl transition-colors z-10"
+                  onClick={() => setLightboxIdx(null)}
+                >
+                  ✕
+                </button>
+                <button
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center border border-slate-700 text-slate-400 hover:text-white hover:border-purple-400 transition-all font-mono z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIdx(
+                      (lightboxIdx - 1 + extraImages.length) %
+                        extraImages.length,
+                    );
+                  }}
+                >
+                  ‹
+                </button>
+                <img
+                  src={thumb(extraImages[lightboxIdx])}
+                  alt={`Screenshot ${lightboxIdx + 1}`}
+                  className="max-w-full max-h-[85vh] object-contain border border-purple-500/20"
+                  onClick={(e) => e.stopPropagation()}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = DUMMY_IMG;
+                  }}
+                />
+                <button
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center border border-slate-700 text-slate-400 hover:text-white hover:border-purple-400 transition-all font-mono z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIdx((lightboxIdx + 1) % extraImages.length);
+                  }}
+                >
+                  ›
+                </button>
+                <span className="absolute bottom-4 font-mono text-[10px] text-slate-600">
+                  {lightboxIdx + 1} / {extraImages.length}
+                </span>
+              </div>
+            )}
 
             {/* Tech stack */}
             {techStack.length > 0 && (
@@ -235,7 +537,9 @@ export default function ProjectDetailPage() {
                 className="mb-10 p-5 bg-[#0d0a1e]/70 border border-purple-500/12"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">// TECH_STACK</span>
+                  <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">
+                    // TECH_STACK
+                  </span>
                   <div className="flex-1 h-px bg-gradient-to-r from-purple-500/20 to-transparent" />
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -253,9 +557,15 @@ export default function ProjectDetailPage() {
 
             {/* Content */}
             {project.content && (
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+              >
                 <div className="flex items-center gap-3 mb-6">
-                  <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">// CONTENT</span>
+                  <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">
+                    // CONTENT
+                  </span>
                   <div className="flex-1 h-px bg-gradient-to-r from-purple-500/20 to-transparent" />
                 </div>
                 <div
@@ -274,7 +584,9 @@ export default function ProjectDetailPage() {
                 className="mt-10 pt-8 border-t border-slate-800/40"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">// TAGS</span>
+                  <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">
+                    // TAGS
+                  </span>
                   <div className="flex-1 h-px bg-gradient-to-r from-purple-500/15 to-transparent" />
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -290,69 +602,192 @@ export default function ProjectDetailPage() {
               </motion.div>
             )}
 
-            {/* Project links */}
-            {(project.project_url || project.github_url) && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="mt-10 pt-8 border-t border-slate-800/40"
-              >
-                <div className="flex items-center gap-3 mb-5">
-                  <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">// PROJECT_LINKS</span>
-                  <div className="flex-1 h-px bg-gradient-to-r from-purple-500/15 to-transparent" />
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  {project.project_url && (
-                    <a
-                      href={project.project_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-5 py-2.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-xs uppercase tracking-widest hover:bg-purple-500/20 hover:border-purple-400/50 transition-all"
-                      style={{ clipPath: "polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)" }}
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                      LIVE_DEMO
-                    </a>
-                  )}
-                  {project.github_url && (
-                    <a
-                      href={project.github_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-5 py-2.5 bg-slate-900/60 border border-slate-700/50 text-slate-300 font-mono text-xs uppercase tracking-widest hover:bg-slate-800/60 hover:border-slate-500/60 hover:text-white transition-all"
-                      style={{ clipPath: "polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)" }}
-                    >
-                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                      </svg>
-                      SOURCE_CODE
-                    </a>
-                  )}
-                </div>
-              </motion.div>
-            )}
+            {/* ── Comments ── */}
+            <section className="mt-16 pt-10 border-t border-slate-800/40">
+              <div className="flex items-center gap-3 mb-8">
+                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
+                <span className="font-mono text-[9px] text-slate-600 uppercase tracking-[0.2em]">
+                  // COMMENTS
+                </span>
+                {!commentsLoading && (
+                  <span className="font-mono text-[9px] text-slate-700">
+                    [{comments.length}]
+                  </span>
+                )}
+                <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/15 to-transparent" />
+              </div>
 
-            {/* Bottom nav */}
-            <div className="mt-12 pt-6 border-t border-slate-800/40 flex items-center justify-between">
-              <Link href="/projects">
-                <button className="group flex items-center gap-2 font-mono text-xs text-slate-600 hover:text-purple-400 transition-colors uppercase tracking-widest">
-                  <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                  BACK_TO_MODULES
-                </button>
-              </Link>
-              <span className="font-mono text-[10px] text-slate-700">{readProgress}% READ</span>
-            </div>
+              {/* Comment list */}
+              <div className="space-y-5 mb-12">
+                {commentsLoading && (
+                  <div className="space-y-4">
+                    {[1, 2].map((i) => (
+                      <div
+                        key={i}
+                        className="bg-[#0d0a1e]/60 border border-slate-800/60 p-4 animate-pulse"
+                      >
+                        <div className="h-2.5 w-24 bg-slate-800 rounded mb-3" />
+                        <div className="h-2 w-full bg-slate-800/60 rounded mb-2" />
+                        <div className="h-2 w-3/4 bg-slate-800/40 rounded" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!commentsLoading && comments.length === 0 && (
+                  <div className="py-8 text-center font-mono text-slate-700 text-xs tracking-widest border border-dashed border-slate-800">
+                    [ NO_COMMENTS_YET ] — be first
+                  </div>
+                )}
+                {!commentsLoading &&
+                  comments.map((c) => (
+                    <div
+                      key={c.id}
+                      className="bg-[#0d0a1e]/60 border border-slate-800/60 p-4"
+                    >
+                      {/* Parent comment */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 flex items-center justify-center bg-purple-950/60 border border-purple-500/20 font-mono text-[10px] text-purple-400">
+                            {(c.name ?? "A")[0].toUpperCase()}
+                          </span>
+                          <span className="font-mono text-xs text-slate-300">
+                            {c.name ?? "Admin"}
+                          </span>
+                        </div>
+                        <span className="font-mono text-[9px] text-slate-700">
+                          {fmtDate(c.created_at, true)}
+                        </span>
+                      </div>
+                      <p className="font-mono text-[13px] text-slate-400 leading-relaxed border-l border-slate-700/60 pl-3 mb-0">
+                        {c.comment}
+                      </p>
+
+                      {/* Nested replies */}
+                      {c.replies && c.replies.length > 0 && (
+                        <div className="mt-4 ml-4 space-y-3 border-l-2 border-purple-500/15 pl-4">
+                          {c.replies.map((r) => (
+                            <div
+                              key={r.id}
+                              className="bg-[#030014]/60 border border-slate-800/40 p-3"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-5 h-5 flex items-center justify-center bg-cyan-950/60 border border-cyan-500/20 font-mono text-[9px] text-cyan-500">
+                                    {(r.name ?? "A")[0].toUpperCase()}
+                                  </span>
+                                  <span className="font-mono text-[11px] text-slate-400">
+                                    {r.name ?? "Admin"}
+                                  </span>
+                                  <span className="font-mono text-[8px] text-purple-700 uppercase tracking-widest">
+                                    ↩ reply
+                                  </span>
+                                </div>
+                                <span className="font-mono text-[9px] text-slate-700">
+                                  {fmtDate(r.created_at, true)}
+                                </span>
+                              </div>
+                              <p className="font-mono text-[12px] text-slate-500 leading-relaxed border-l border-cyan-500/15 pl-3">
+                                {r.comment}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+
+              {/* Submit form */}
+              <div className="bg-[#0d0a1e]/60 border border-purple-500/12 p-5">
+                <div className="flex items-center gap-2 mb-5">
+                  <span className="w-1 h-1 bg-purple-400 rounded-full animate-pulse" />
+                  <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">
+                    LEAVE_COMMENT
+                  </span>
+                </div>
+
+                {submitStatus === "success" ? (
+                  <div className="py-6 text-center font-mono text-green-400 text-xs tracking-widest border border-green-500/20 bg-green-950/20">
+                    ✓ COMMENT_SUBMITTED — thank you
+                    <button
+                      onClick={() => setSubmitStatus("idle")}
+                      className="block mx-auto mt-3 text-slate-600 hover:text-slate-300 text-[10px] transition-colors"
+                    >
+                      [ ADD_ANOTHER ]
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {(["name", "email", "phone"] as const).map((field) => (
+                        <div key={field}>
+                          <label className="block font-mono text-[8px] text-slate-700 uppercase tracking-widest mb-1">
+                            {field}
+                          </label>
+                          <input
+                            type={field === "email" ? "email" : "text"}
+                            value={form[field]}
+                            onChange={(e) =>
+                              setForm((f) => ({
+                                ...f,
+                                [field]: e.target.value,
+                              }))
+                            }
+                            placeholder={
+                              field === "email"
+                                ? "user@domain.com"
+                                : field === "phone"
+                                  ? "+1 000 000 0000"
+                                  : "Your name"
+                            }
+                            className="w-full bg-[#030014] border border-slate-800 hover:border-slate-700 focus:border-purple-500/50 focus:outline-none text-slate-300 font-mono text-[11px] placeholder:text-slate-800 py-2 px-3 transition-colors"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <label className="block font-mono text-[8px] text-slate-700 uppercase tracking-widest mb-1">
+                        comment <span className="text-purple-700">*</span>
+                      </label>
+                      <textarea
+                        required
+                        minLength={5}
+                        maxLength={5000}
+                        rows={4}
+                        value={form.comment}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, comment: e.target.value }))
+                        }
+                        placeholder="Write your comment..."
+                        className="w-full bg-[#030014] border border-slate-800 hover:border-slate-700 focus:border-purple-500/50 focus:outline-none text-slate-300 font-mono text-[11px] placeholder:text-slate-800 py-2 px-3 transition-colors resize-none"
+                      />
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="font-mono text-[9px] text-slate-800">
+                          {form.comment.length}/5000
+                        </span>
+                        {submitError && (
+                          <span className="font-mono text-[9px] text-red-500">
+                            {submitError}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={submitting || form.comment.trim().length < 5}
+                      className="px-6 py-2.5 bg-purple-500/10 border border-purple-500/40 text-purple-300 font-mono text-[10px] uppercase tracking-widest hover:bg-purple-500/20 hover:border-purple-400/60 hover:shadow-[0_0_14px_rgba(168,85,247,0.2)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      {submitting ? "SUBMITTING..." : "> SUBMIT_COMMENT"}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </section>
           </article>
 
           {/* ════ RIGHT: sidebar ════ */}
           <aside className="lg:col-span-4">
             <div className="lg:sticky lg:top-24 space-y-5">
-
               {/* Project meta */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
@@ -362,38 +797,54 @@ export default function ProjectDetailPage() {
               >
                 <div className="flex items-center gap-2 mb-4">
                   <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" />
-                  <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">MODULE_METADATA</span>
+                  <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">
+                    MODULE_METADATA
+                  </span>
                 </div>
                 <ul className="space-y-3">
                   {[
-                    { k: "STATUS",    v: project.status.toUpperCase() },
-                    { k: "CATEGORY",  v: project.category ?? "—" },
-                    { k: "START",     v: fmtDate(project.start_date) },
-                    { k: "END",       v: fmtDate(project.end_date) },
-                    { k: "CREATED",   v: fmtDate(project.created_at) },
-                    { k: "MOD_ID",    v: `#${project.id}` },
+                    { k: "STATUS", v: project.status.toUpperCase() },
+                    { k: "CREATED", v: fmtDate(project.created_at) },
+                    { k: "MOD_ID", v: `#${project.id}` },
                   ].map(({ k, v }) => (
-                    <li key={k} className="flex items-start justify-between gap-2">
-                      <span className="font-mono text-[9px] text-slate-700 uppercase tracking-widest shrink-0">{k}</span>
-                      <span className="font-mono text-[11px] text-slate-300 text-right truncate ml-2">{v}</span>
+                    <li
+                      key={k}
+                      className="flex items-start justify-between gap-2"
+                    >
+                      <span className="font-mono text-[9px] text-slate-700 uppercase tracking-widest shrink-0">
+                        {k}
+                      </span>
+                      <span className="font-mono text-[11px] text-slate-300 text-right truncate ml-2">
+                        {v}
+                      </span>
                     </li>
                   ))}
                 </ul>
 
                 {/* Quick links inside metadata */}
-                {(project.project_url || project.github_url) && (
+                {(liveUrl || project.github_url) && (
                   <div className="mt-4 pt-4 border-t border-purple-500/10 space-y-2">
-                    {project.project_url && (
+                    {liveUrl && (
                       <a
-                        href={project.project_url}
+                        href={liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 font-mono text-[10px] text-purple-500 hover:text-purple-300 transition-colors"
                       >
-                        <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        <svg
+                          className="w-3 h-3 shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
                         </svg>
-                        LIVE_PREVIEW
+                        VISIT_SITE
                       </a>
                     )}
                     {project.github_url && (
@@ -403,7 +854,11 @@ export default function ProjectDetailPage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 font-mono text-[10px] text-slate-500 hover:text-slate-200 transition-colors"
                       >
-                        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <svg
+                          className="w-3 h-3 shrink-0"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
                           <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
                         </svg>
                         GITHUB_REPO
@@ -423,7 +878,9 @@ export default function ProjectDetailPage() {
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
-                    <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">TECH_STACK</span>
+                    <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">
+                      TECH_STACK
+                    </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {techStack.map((tech, i) => (
@@ -448,24 +905,34 @@ export default function ProjectDetailPage() {
                 >
                   <div className="flex items-center gap-2 mb-4">
                     <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
-                    <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">RELATED_MODULES</span>
+                    <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">
+                      RELATED_MODULES
+                    </span>
                   </div>
                   <div className="space-y-3">
                     {related.map((p) => (
-                      <Link key={p.id} href={`/projects/${p.slug}`} className="flex gap-3 group">
+                      <Link
+                        key={p.id}
+                        href={`/projects/${p.slug}`}
+                        className="flex gap-3 group"
+                      >
                         <div className="w-14 h-14 shrink-0 overflow-hidden border border-purple-500/10 group-hover:border-orange-400/30 transition-colors">
                           <img
-                            src={thumb(p.thumbnail_image)}
+                            src={thumb(p.thumb_image)}
                             alt={p.title || p.name || "Project"}
-                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                            onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
+                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-500"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = DUMMY_IMG;
+                            }}
                           />
                         </div>
                         <div className="min-w-0 flex flex-col justify-center">
                           <p className="font-mono text-xs text-white group-hover:text-purple-300 transition-colors line-clamp-2 leading-snug mb-1">
                             {p.title || p.name}
                           </p>
-                          <span className="font-mono text-[9px] text-slate-700">{fmtDate(p.created_at, true)}</span>
+                          <span className="font-mono text-[9px] text-slate-700">
+                            {fmtDate(p.created_at, true)}
+                          </span>
                         </div>
                       </Link>
                     ))}
@@ -483,7 +950,9 @@ export default function ProjectDetailPage() {
                 >
                   <div className="flex items-center gap-2 mb-4">
                     <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-                    <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">CATEGORIES</span>
+                    <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">
+                      CATEGORIES
+                    </span>
                   </div>
                   <div className="space-y-0.5 max-h-[260px] overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
                     {categories.map(({ type, count }) => (
@@ -494,7 +963,9 @@ export default function ProjectDetailPage() {
                       >
                         <span className="font-mono text-[11px] text-slate-500 group-hover:text-slate-200 transition-colors truncate flex items-center gap-2 min-w-0">
                           <span className="text-purple-800 shrink-0">&gt;</span>
-                          <span className="truncate">{type.substring(0, 26)}</span>
+                          <span className="truncate">
+                            {type.substring(0, 26)}
+                          </span>
                         </span>
                         <span className="font-mono text-[10px] px-1.5 py-0.5 bg-slate-800/80 text-slate-600 group-hover:bg-purple-500/10 group-hover:text-purple-400 transition-all shrink-0 ml-2">
                           {count}
@@ -515,7 +986,9 @@ export default function ProjectDetailPage() {
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-1.5 h-1.5 bg-slate-600 rounded-full" />
-                    <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">TAGS</span>
+                    <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">
+                      TAGS
+                    </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {tags.map((t, i) => (
@@ -536,7 +1009,8 @@ export default function ProjectDetailPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.55 }}
               >
-                <Link href="/projects"
+                <Link
+                  href="/projects"
                   className="flex items-center justify-center gap-2 w-full py-3 border border-purple-500/15 text-slate-600 font-mono text-[10px] uppercase tracking-widest hover:border-purple-500/30 hover:text-purple-400 transition-all"
                 >
                   &lt; ALL_MODULES

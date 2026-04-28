@@ -1,5 +1,8 @@
 import { API_CONFIG } from "@/config/api";
 
+const CACHE_TTL = 5 * 60 * 1000;
+let _projectsCache: { data: Project[]; at: number } | null = null;
+
 export interface Project {
   id: number;
   title?: string;
@@ -7,13 +10,14 @@ export interface Project {
   description: string;
   content: string | null;
   slug: string;
-  thumbnail_image: string | null;
-  images: string | null;
+  thumb_image: string | null;
+  images: string[] | string | null;
+  link: string | null;
   project_url: string | null;
   github_url: string | null;
-  tags: string | null;           // JSON string or comma-separated
+  tags: string | null;
   category: string | null;
-  technology: string | null;     // tech stack info
+  technology: string | null;
   status: string;
   is_featured: number;
   is_published: number;
@@ -75,15 +79,23 @@ export async function getPagedProjects(page: number): Promise<PaginatedProjects>
 }
 
 export async function getAllProjects(): Promise<Project[]> {
+  if (_projectsCache && Date.now() - _projectsCache.at < CACHE_TTL) {
+    return _projectsCache.data;
+  }
   const first = await getPagedProjects(1);
-  if (first.lastPage <= 1) return first.data;
-
-  const rest = await Promise.all(
-    Array.from({ length: first.lastPage - 1 }, (_, i) =>
-      getPagedProjects(i + 2)
-    )
-  );
-  return [first.data, ...rest.map((r) => r.data)].flat();
+  let result: Project[];
+  if (first.lastPage <= 1) {
+    result = first.data;
+  } else {
+    const rest = await Promise.all(
+      Array.from({ length: first.lastPage - 1 }, (_, i) =>
+        getPagedProjects(i + 2)
+      )
+    );
+    result = [first.data, ...rest.map((r) => r.data)].flat();
+  }
+  _projectsCache = { data: result, at: Date.now() };
+  return result;
 }
 
 export async function getProjectBySlug(slug: string): Promise<Project> {

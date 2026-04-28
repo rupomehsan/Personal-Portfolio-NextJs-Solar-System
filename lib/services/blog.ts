@@ -1,5 +1,8 @@
 import { API_CONFIG } from "@/config/api";
 
+const CACHE_TTL = 5 * 60 * 1000;
+let _blogsCache: { data: Blog[]; at: number } | null = null;
+
 export interface Blog {
   id: number;
   blog_category_id: number;
@@ -84,15 +87,23 @@ export async function getPagedBlogs(page: number): Promise<PaginatedBlogs> {
  * Used by the blog-detail page and sidebar population.
  */
 export async function getAllBlogs(): Promise<Blog[]> {
+  if (_blogsCache && Date.now() - _blogsCache.at < CACHE_TTL) {
+    return _blogsCache.data;
+  }
   const first = await getPagedBlogs(1);
-  if (first.lastPage <= 1) return first.data;
-
-  const rest = await Promise.all(
-    Array.from({ length: first.lastPage - 1 }, (_, i) =>
-      getPagedBlogs(i + 2)
-    )
-  );
-  return [first.data, ...rest.map((r) => r.data)].flat();
+  let result: Blog[];
+  if (first.lastPage <= 1) {
+    result = first.data;
+  } else {
+    const rest = await Promise.all(
+      Array.from({ length: first.lastPage - 1 }, (_, i) =>
+        getPagedBlogs(i + 2)
+      )
+    );
+    result = [first.data, ...rest.map((r) => r.data)].flat();
+  }
+  _blogsCache = { data: result, at: Date.now() };
+  return result;
 }
 
 /** Try the single-blog endpoint; fall back to getAllBlogs + slug filter. */

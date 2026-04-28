@@ -9,7 +9,7 @@ import { API_CONFIG } from "@/config/api";
 const DUMMY_IMG =
   "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1000&q=80";
 
-const INITIAL_VISIBLE = 3;
+const INITIAL_VISIBLE = 5;
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -34,10 +34,10 @@ function resolveThumbnail(path: string | null): string {
   return `${API_CONFIG.baseUrl}/storage/${path}`;
 }
 
-function resolveLink(blog: Blog): string {
-  if (blog.url && blog.url.startsWith("http")) return blog.url;
-  if (blog.slug) return `${API_CONFIG.baseUrl}/blog/${blog.slug}`;
-  return "#";
+function resolveLink(blog: Blog): { href: string; external: boolean } {
+  if (blog.url && blog.url.startsWith("http")) return { href: blog.url, external: true };
+  if (blog.slug) return { href: `/blogs/${blog.slug}`, external: false };
+  return { href: "#", external: false };
 }
 
 export const Blogs = () => {
@@ -59,8 +59,31 @@ export const Blogs = () => {
   return (
     <section
       id="blogs"
-      className="flex flex-col items-center justify-center gap-10 h-full relative overflow-hidden py-20 z-20 min-h-[800px]"
+      className="flex flex-col items-center justify-center gap-10 h-full relative overflow-hidden py-20 z-20 min-h-[800px] w-full max-w-[1400px] mx-auto"
     >
+      {/* HUD Frame Borders */}
+      <div className="absolute inset-4 pointer-events-none hidden md:block z-10">
+        <svg width="80" height="80" className="absolute top-0 left-0 opacity-60">
+          <path d="M 80 2 L 20 2 L 2 20 L 2 80" fill="none" stroke="#38bdf8" strokeWidth="2" />
+          <path d="M 80 8 L 25 8 L 8 25 L 8 80" fill="none" stroke="#38bdf8" strokeWidth="1" strokeOpacity="0.5" />
+        </svg>
+        <svg width="80" height="80" className="absolute top-0 right-0 opacity-60">
+          <path d="M 0 2 L 60 2 L 78 20 L 78 80" fill="none" stroke="#38bdf8" strokeWidth="2" />
+          <path d="M 0 8 L 55 8 L 72 25 L 72 80" fill="none" stroke="#38bdf8" strokeWidth="1" strokeOpacity="0.5" />
+        </svg>
+        <svg width="80" height="80" className="absolute bottom-0 left-0 opacity-60">
+          <path d="M 80 78 L 20 78 L 2 60 L 2 0" fill="none" stroke="#38bdf8" strokeWidth="2" />
+          <path d="M 80 72 L 25 72 L 8 55 L 8 0" fill="none" stroke="#38bdf8" strokeWidth="1" strokeOpacity="0.5" />
+        </svg>
+        <svg width="80" height="80" className="absolute bottom-0 right-0 opacity-60">
+          <path d="M 0 78 L 60 78 L 78 60 L 78 0" fill="none" stroke="#38bdf8" strokeWidth="2" />
+          <path d="M 0 72 L 55 72 L 72 55 L 72 0" fill="none" stroke="#38bdf8" strokeWidth="1" strokeOpacity="0.5" />
+        </svg>
+        <div className="absolute top-[1px] left-[80px] right-[80px] h-[1px] bg-cyan-500/20" />
+        <div className="absolute bottom-[1px] left-[80px] right-[80px] h-[1px] bg-cyan-500/20" />
+        <div className="absolute left-[1px] top-[80px] bottom-[80px] w-[1px] bg-cyan-500/20" />
+        <div className="absolute right-[1px] top-[80px] bottom-[80px] w-[1px] bg-cyan-500/20" />
+      </div>
       {/* ── Section heading ── */}
       <div className="absolute w-auto h-auto top-[2%] sm:top-[5%] z-[5]">
         <div className="flex flex-col items-center mb-6 md:mb-10 w-full relative">
@@ -252,7 +275,8 @@ export const Blogs = () => {
                         </p>
 
                         <div className="flex justify-start">
-                          <Link href={resolveLink(blog)} target="_blank" rel="noopener noreferrer">
+                          {(() => { const { href, external } = resolveLink(blog); return (
+                          <Link href={href} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
                             <button className="px-5 py-2 bg-transparent border border-cyan-500/40 text-cyan-300 font-mono text-xs uppercase tracking-widest hover:bg-cyan-500/10 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all flex items-center gap-2 group/btn relative overflow-hidden">
                               <div className="absolute inset-0 w-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent group-hover/btn:w-full transition-all duration-700 z-0" />
                               <span className="relative z-10 flex items-center gap-2 font-bold">
@@ -269,6 +293,7 @@ export const Blogs = () => {
                               </svg>
                             </button>
                           </Link>
+                          ); })()}
                         </div>
                       </div>
                     </div>

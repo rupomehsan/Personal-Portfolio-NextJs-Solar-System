@@ -1,5 +1,8 @@
 import { API_CONFIG } from "@/config/api";
 
+const CACHE_TTL = 5 * 60 * 1000;
+let _marketplacesCache: { data: Marketplace[]; at: number } | null = null;
+
 export interface Marketplace {
   id: number;
   title?: string;
@@ -75,15 +78,23 @@ export async function getPagedMarketplaces(page: number): Promise<PaginatedMarke
 }
 
 export async function getAllMarketplaces(): Promise<Marketplace[]> {
+  if (_marketplacesCache && Date.now() - _marketplacesCache.at < CACHE_TTL) {
+    return _marketplacesCache.data;
+  }
   const first = await getPagedMarketplaces(1);
-  if (first.lastPage <= 1) return first.data;
-
-  const rest = await Promise.all(
-    Array.from({ length: first.lastPage - 1 }, (_, i) =>
-      getPagedMarketplaces(i + 2)
-    )
-  );
-  return [first.data, ...rest.map((r) => r.data)].flat();
+  let result: Marketplace[];
+  if (first.lastPage <= 1) {
+    result = first.data;
+  } else {
+    const rest = await Promise.all(
+      Array.from({ length: first.lastPage - 1 }, (_, i) =>
+        getPagedMarketplaces(i + 2)
+      )
+    );
+    result = [first.data, ...rest.map((r) => r.data)].flat();
+  }
+  _marketplacesCache = { data: result, at: Date.now() };
+  return result;
 }
 
 export async function getMarketplaceBySlug(slug: string): Promise<Marketplace> {
