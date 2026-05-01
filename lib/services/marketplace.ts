@@ -2,6 +2,7 @@ import { API_CONFIG } from "@/config/api";
 
 const CACHE_TTL = 5 * 60 * 1000;
 let _marketplacesCache: { data: Marketplace[]; at: number } | null = null;
+let _featuredCache: { data: Marketplace[]; at: number } | null = null;
 
 export interface Marketplace {
   id: number;
@@ -22,6 +23,12 @@ export interface Marketplace {
   is_published: number;
   start_date: string | null;
   end_date: string | null;
+  regular_price?: number | string | null;
+  sale_price?: number | string | null;
+  demo_url?: string | null;
+  version?: string | null;
+  features?: string[] | string | null;
+  gallery_images?: string[] | string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -57,9 +64,13 @@ interface MarketplaceDetailApiResponse {
   data: Marketplace;
 }
 
-export async function getPagedMarketplaces(page: number): Promise<PaginatedMarketplaces> {
+export async function getPagedMarketplaces(
+  page: number,
+  extraParams: Record<string, string> = {}
+): Promise<PaginatedMarketplaces> {
+  const qs = new URLSearchParams({ status: "active", ...extraParams, page: String(page) });
   const res = await fetch(
-    `${API_CONFIG.endpoints.marketplaces.getAll}?page=${page}`,
+    `${API_CONFIG.endpoints.marketplaces.getAll}?${qs}`,
     { ...API_CONFIG.defaultOptions }
   );
   if (!res.ok) throw new Error(`Failed to fetch marketplaces — HTTP ${res.status}`);
@@ -77,23 +88,32 @@ export async function getPagedMarketplaces(page: number): Promise<PaginatedMarke
   };
 }
 
+async function fetchAllPages(extraParams: Record<string, string> = {}): Promise<Marketplace[]> {
+  const first = await getPagedMarketplaces(1, extraParams);
+  if (first.lastPage <= 1) return first.data;
+  const rest = await Promise.all(
+    Array.from({ length: first.lastPage - 1 }, (_, i) =>
+      getPagedMarketplaces(i + 2, extraParams)
+    )
+  );
+  return [first.data, ...rest.map((r) => r.data)].flat();
+}
+
+/** All active marketplaces — used on /marketplace page and slug lookups. */
 export async function getAllMarketplaces(): Promise<Marketplace[]> {
   if (_marketplacesCache && Date.now() - _marketplacesCache.at < CACHE_TTL) {
     return _marketplacesCache.data;
   }
-  const first = await getPagedMarketplaces(1);
-  let result: Marketplace[];
-  if (first.lastPage <= 1) {
-    result = first.data;
-  } else {
-    const rest = await Promise.all(
-      Array.from({ length: first.lastPage - 1 }, (_, i) =>
-        getPagedMarketplaces(i + 2)
-      )
-    );
-    result = [first.data, ...rest.map((r) => r.data)].flat();
-  }
+  const result = await fetchAllPages();
   _marketplacesCache = { data: result, at: Date.now() };
+  return result;
+}
+
+/** Featured active marketplaces — used on the home page. */
+export async function getFeaturedMarketplaces(): Promise<Marketplace[]> {
+  if (_featuredCache && Date.now() - _featuredCache.at < CACHE_TTL) return _featuredCache.data;
+  const result = await fetchAllPages({ is_featured: "1" });
+  _featuredCache = { data: result, at: Date.now() };
   return result;
 }
 

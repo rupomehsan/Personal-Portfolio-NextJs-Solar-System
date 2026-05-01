@@ -13,7 +13,7 @@ const DUMMY_IMG = "https://images.unsplash.com/photo-1555066931-4365d14bab8c?aut
 function thumb(path: string | null): string {
   if (!path) return DUMMY_IMG;
   if (path.startsWith("http")) return path;
-  return `${API_CONFIG.baseUrl}/storage/${path}`;
+  return `${API_CONFIG.baseUrl}/${path}`;
 }
 
 export default function CheckoutPage() {
@@ -21,6 +21,14 @@ export default function CheckoutPage() {
   const [complete, setComplete] = useState(false);
   const [marketplace, setMarketplace] = useState<Marketplace | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    trx_number: "",
+  });
 
   useEffect(() => {
     getAllMarketplaces()
@@ -30,6 +38,43 @@ export default function CheckoutPage() {
       })
       .finally(() => setLoading(false));
   }, [slug]);
+
+  async function handleCheckoutSubmit() {
+    if (!marketplace) return;
+    setSubmitting(true);
+    try {
+      const payload = {
+        digital_product_id: marketplace.id,
+        first_name: form.first_name,
+        last_name: form.last_name,
+        email: form.email,
+        phone: form.phone,
+        trx_number: form.trx_number,
+       
+        payment_status: "pending",
+      };
+
+      const res = await fetch(
+        `${API_CONFIG.baseUrl}/api/submit-digital-product-order`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (res.ok || res.status === 201) {
+        setComplete(true);
+      } else {
+        alert("Order submission failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Network error. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   if (loading) {
       return (
@@ -73,28 +118,34 @@ export default function CheckoutPage() {
                     </div>
                 </div>
 
-                <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); setComplete(true); }}>
+                <form className="space-y-6" onSubmit={async (e) => { e.preventDefault(); await handleCheckoutSubmit(); }}>
                     <div className="space-y-4">
                         <h3 className="text-green-400/80 border-l-2 border-green-500/50 pl-3 tracking-widest text-sm uppercase mb-4 border-b border-slate-800 pb-2">Billing Information</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <input required placeholder="First Name" className="bg-black/50 border border-slate-800 rounded-md text-white p-3 text-sm focus:border-green-500/50 outline-none font-sans" />
-                            <input required placeholder="Last Name" className="bg-black/50 border border-slate-800 rounded-md text-white p-3 text-sm focus:border-green-500/50 outline-none font-sans" />
+                            <input required placeholder="First Name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} className="bg-black/50 border border-slate-800 rounded-md text-white p-3 text-sm focus:border-green-500/50 outline-none font-sans" />
+                            <input required placeholder="Last Name" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} className="bg-black/50 border border-slate-800 rounded-md text-white p-3 text-sm focus:border-green-500/50 outline-none font-sans" />
                         </div>
-                        <input required type="email" placeholder="Email Address" className="w-full bg-black/50 border border-slate-800 rounded-md text-white p-3 text-sm focus:border-green-500/50 outline-none font-sans" />
+                        <input required type="email" placeholder="Email Address" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full bg-black/50 border border-slate-800 rounded-md text-white p-3 text-sm focus:border-green-500/50 outline-none font-sans" />
+                        <input required type="tel" placeholder="Phone Number" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full bg-black/50 border border-slate-800 rounded-md text-white p-3 text-sm focus:border-green-500/50 outline-none font-sans" />
                     </div>
 
                     <div className="space-y-4 pt-6">
-                        <h3 className="text-green-400/80 border-l-2 border-green-500/50 pl-3 tracking-widest text-sm uppercase mb-4 border-b border-slate-800 pb-2">Payment Method</h3>
-                        <input required placeholder="Card Number" type="text" className="w-full bg-black/50 border border-slate-800 rounded-md text-white p-3 text-sm focus:border-green-500/50 outline-none font-sans" />
-                        <div className="grid grid-cols-2 gap-4">
-                            <input required placeholder="MM/YY" className="bg-black/50 border border-slate-800 rounded-md text-white p-3 text-sm focus:border-green-500/50 outline-none font-sans" />
-                            <input required placeholder="CVC" type="password" className="bg-black/50 border border-slate-800 rounded-md text-white p-3 text-sm focus:border-green-500/50 outline-none font-sans" />
-                        </div>
+                        <h3 className="text-green-400/80 border-l-2 border-green-500/50 pl-3 tracking-widest text-sm uppercase mb-4 border-b border-slate-800 pb-2">Transaction ID</h3>
+                        <input required placeholder="Transaction ID (e.g., TRX-20260502-001)" value={form.trx_number} onChange={(e) => setForm({ ...form, trx_number: e.target.value })} className="w-full bg-black/50 border border-slate-800 rounded-md text-white p-3 text-sm focus:border-green-500/50 outline-none font-sans" />
                     </div>
 
-                    <button type="submit" className="w-full mt-8 py-4 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] flex justify-center items-center gap-3">
-                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                        Pay $99.00
+                    <button type="submit" disabled={submitting} className="w-full mt-8 py-4 rounded-xl bg-green-500 hover:bg-green-400 disabled:bg-green-500/50 disabled:cursor-not-allowed text-black font-bold uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] flex justify-center items-center gap-3">
+                        {submitting ? (
+                          <>
+                            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                            Complete Order
+                          </>
+                        )}
                     </button>
                     
                     <p className="text-center font-mono text-[9px] text-slate-600 mt-4 uppercase flex items-center justify-center gap-2">
@@ -111,9 +162,11 @@ export default function CheckoutPage() {
         <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
             <svg className="w-10 h-10 text-green-400 drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
         </div>
-        <h2 className="text-2xl text-white font-bold tracking-[0.3em] mb-4 text-shadow-md">PAYMENT SUCCESSFUL</h2>
+        <h2 className="text-2xl text-white font-bold tracking-[0.3em] mb-4 text-shadow-md">  
+             SUCCESSFULLY ORDERED PLACED
+        </h2>
         <p className="text-slate-400 text-sm leading-relaxed mb-8 max-w-[400px] mx-auto font-sans">
-            Thank you for purchasing <span className="text-green-400 font-bold">{productName}</span>. Your transaction has been securely processed. <br/><br/>You will receive an email shortly with your download instructions and license key.
+            Thank you for interest to  purchasing <span className="text-green-400 font-bold">{productName}</span>. <br/><br/>You will receive an email shortly with your download instructions and license key.
         </p>
         <Link href="/marketplace">
             <button className="px-8 py-3 bg-green-500/10 border border-green-500/40 rounded-xl text-green-400 uppercase tracking-widest hover:bg-green-500/20 hover:text-green-300 hover:shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all text-xs font-bold font-mono">

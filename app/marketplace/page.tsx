@@ -29,7 +29,20 @@ function fmtDate(s: string | null | undefined, short = false) {
 function thumb(p: string | null) {
   if (!p) return DUMMY_IMG;
   if (p.startsWith("http")) return p;
-  return `${API_CONFIG.baseUrl}/storage/${p}`;
+  return `${API_CONFIG.baseUrl}/${p}`;
+}
+
+function stripHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
+}
+
+function fmtPrice(sale: unknown, regular: unknown): string {
+  const v = (sale !== null && sale !== undefined && sale !== "" && Number(sale) > 0) ? sale : regular;
+  if (v === null || v === undefined || v === "") return "FREE";
+  const n = Number(v);
+  if (isNaN(n)) return "FREE";
+  return `$${Math.floor(n)}`;
 }
 
 function inferCategory(title: string | null | undefined, category: string | null | undefined): string | null {
@@ -178,7 +191,7 @@ export default function AllMarketplacesPage() {
           </div>
           <h1 className="font-mono font-black text-4xl sm:text-6xl text-white leading-none">
             <span className="text-cyan-500 text-xl sm:text-3xl mr-2 animate-pulse">root@sys:~#</span>
-            ALL<span className="text-purple-400">_</span>MARKETPLACE
+            ALL<span className="text-purple-400">_</span>PRODUCTS
             <motion.span animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.85 }}
               className="inline-block w-[3px] h-10 sm:h-14 bg-purple-400 ml-2 align-middle" />
           </h1>
@@ -266,7 +279,7 @@ export default function AllMarketplacesPage() {
                             <div className="absolute inset-0 bg-gradient-to-t from-[#080d19] via-[#080d19]/10 to-transparent" />
                             {/* Price badge */}
                             <div className="absolute top-2.5 right-2.5 bg-green-500 text-black font-mono font-bold text-[10px] px-2.5 py-1 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.5)] z-10">
-                              $99
+                              {fmtPrice(marketplace.sale_price, marketplace.regular_price)}
                             </div>
                             {marketplace.is_featured === 1 && (
                               <span className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 bg-orange-500/90 font-mono text-[8px] text-white uppercase tracking-widest rounded-full">
@@ -296,7 +309,7 @@ export default function AllMarketplacesPage() {
                             </h3>
 
                             <p className="text-slate-500 text-[11px] leading-relaxed mb-3 flex-grow line-clamp-2">
-                              {marketplace.description}
+                              {stripHtml(marketplace.description)}
                             </p>
 
                             {tags.length > 0 && (

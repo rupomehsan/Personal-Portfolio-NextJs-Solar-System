@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import {
   getAllMarketplaces,
@@ -11,8 +11,6 @@ import {
   type Marketplace,
 } from "@/lib/services/marketplace";
 import { API_CONFIG } from "@/config/api";
-import { getComments, postComment, type Comment, type CommentInput } from "@/lib/services/comment";
-import { useRef } from "react";
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 const DUMMY_IMG =
@@ -30,7 +28,7 @@ function fmtDate(s: string | null | undefined, short = false) {
 function thumb(p: string | null) {
   if (!p) return DUMMY_IMG;
   if (p.startsWith("http")) return p;
-  return `${API_CONFIG.baseUrl}/storage/${p}`;
+  return `${API_CONFIG.baseUrl}/${p}`;
 }
 
 function toHTML(content: string | null): string {
@@ -43,272 +41,180 @@ function toHTML(content: string | null): string {
     .join("");
 }
 
+function parseArray(raw: string[] | string | null | undefined): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  try { return JSON.parse(raw) as string[]; } catch { /**/ }
+  return raw.split(",").map((t) => t.trim()).filter(Boolean);
+}
+
+function formatPrice(price: number | string | null | undefined): string {
+  if (price === null || price === undefined || price === "") return "";
+  const n = typeof price === "string" ? parseFloat(price) : price;
+  if (isNaN(n)) return String(price);
+  return `$${Math.round(n)}`;
+}
+
+function stripHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
+}
+
+/* ─── types ──────────────────────────────────────────────────────────────── */
+interface ProductComment {
+  id: number;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  comment: string;
+  created_at: string;
+  replies?: ProductComment[];
+}
+
+interface DigitalProduct extends Marketplace {
+  gallery_images?: string[] | string | null;
+  demo_url?: string | null;
+  regular_price?: number | string | null;
+  sale_price?: number | string | null;
+  short_description?: string | null;
+  features?: string[] | string | null;
+  version?: string | null;
+  total_views?: number;
+  total_likes?: number;
+  comments?: ProductComment[];
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    PAGE
 ══════════════════════════════════════════════════════════════════════════════ */
-/* ─── comment avatar ─────────────────────────────────────────────────────── */
-function Avatar({ name }: { name: string }) {
-  const colors = ["#0e7490", "#b45309", "#065f46", "#7c3aed", "#be123c"];
-  const color  = colors[name.charCodeAt(0) % colors.length];
-  return (
-    <div
-      className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-sm text-white shrink-0"
-      style={{ background: color }}
-    >
-      {name.charAt(0).toUpperCase()}
-    </div>
-  );
-}
-
-/* ─── single comment ─────────────────────────────────────────────────────── */
-function CommentItem({
-  comment,
-  blogId,
-  onReplyPosted,
-}: {
-  comment: Comment;
-  blogId: number;
-  onReplyPosted: (parent: number, c: Comment) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", comment: "" });
-  const [busy, setBusy] = useState(false);
-  const [err, setErr]   = useState("");
-  const [ok, setOk]     = useState(false);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.name.trim() || !form.comment.trim()) { setErr("Name and message are required."); return; }
-    setBusy(true); setErr("");
-    try {
-      const input: CommentInput = { blog_id: blogId, parent_id: comment.id, ...form };
-      const c = await postComment(input);
-      onReplyPosted(comment.id, c);
-      setOk(true); setOpen(false); setForm({ name: "", email: "", comment: "" });
-    } catch (e: unknown) {
-      setErr((e as Error).message ?? "Failed to post reply.");
-    } finally { setBusy(false); }
-  }
-
-  return (
-    <div className="flex gap-3">
-      <Avatar name={comment.name} />
-      <div className="flex-1 min-w-0">
-        <div className="bg-[#0d1a2d]/80 border border-cyan-500/10 p-4">
-          <div className="flex items-baseline gap-3 mb-2 flex-wrap">
-            <span className="font-mono font-bold text-sm text-white">{comment.name}</span>
-            <span className="font-mono text-[10px] text-slate-600">{fmtDate(comment.created_at)}</span>
-            {ok && <span className="font-mono text-[9px] text-green-500 tracking-widest">✓ REPLY_SENT</span>}
-          </div>
-          <p className="font-mono text-slate-400 text-xs leading-relaxed">{comment.comment}</p>
-          <button
-            onClick={() => { setOpen((v) => !v); setErr(""); }}
-            className="mt-3 font-mono text-[10px] text-cyan-700 hover:text-cyan-400 transition-colors uppercase tracking-widest flex items-center gap-1"
-          >
-            <span className="text-orange-500">&gt;</span> {open ? "CANCEL" : "REPLY"}
-          </button>
-        </div>
-
-        {/* Inline reply form */}
-        <AnimatePresence>
-          {open && (
-            <motion.form
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              onSubmit={submit}
-              className="overflow-hidden"
-            >
-              <div className="bg-[#0b1220]/70 border border-cyan-500/10 border-t-0 p-4 space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                    placeholder="NAME *" className="bg-black/30 border border-slate-700/60 text-white placeholder-slate-700 font-mono text-xs px-3 py-2 outline-none focus:border-cyan-500/40 w-full" />
-                  <input value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                    placeholder="EMAIL (optional)" className="bg-black/30 border border-slate-700/60 text-white placeholder-slate-700 font-mono text-xs px-3 py-2 outline-none focus:border-cyan-500/40 w-full" />
-                </div>
-                <textarea value={form.comment} onChange={(e) => setForm((f) => ({ ...f, comment: e.target.value }))}
-                  rows={3} placeholder="REPLY_MESSAGE *" className="w-full bg-black/30 border border-slate-700/60 text-white placeholder-slate-700 font-mono text-xs px-3 py-2 outline-none focus:border-cyan-500/40 resize-none" />
-                {err && <p className="font-mono text-[10px] text-orange-400">[ERROR] {err}</p>}
-                <button type="submit" disabled={busy}
-                  className="px-5 py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-[11px] uppercase tracking-widest hover:bg-cyan-500/20 disabled:opacity-40 transition-colors flex items-center gap-2">
-                  {busy && <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.7, ease: "linear" }} className="inline-block w-3 h-3 border border-t-cyan-400 border-cyan-500/20 rounded-full" />}
-                  {busy ? "POSTING..." : "POST_REPLY"}
-                </button>
-              </div>
-            </motion.form>
-          )}
-        </AnimatePresence>
-
-        {/* Nested replies */}
-        {(comment.replies ?? []).length > 0 && (
-          <div className="mt-2 ml-4 pl-4 border-l border-cyan-500/10 space-y-2">
-            {comment.replies!.map((r) => (
-              <div key={r.id} className="flex gap-2.5">
-                <Avatar name={r.name} />
-                <div className="flex-1 bg-[#0d1a2d]/60 border border-slate-800/50 p-3">
-                  <div className="flex items-baseline gap-3 mb-1.5 flex-wrap">
-                    <span className="font-mono font-bold text-xs text-slate-200">{r.name}</span>
-                    <span className="font-mono text-[9px] text-slate-700">{fmtDate(r.created_at)}</span>
-                  </div>
-                  <p className="font-mono text-slate-500 text-[11px] leading-relaxed">{r.comment}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ─── comments section ───────────────────────────────────────────────────── */
-function CommentsSection({ blogId }: { blogId: number }) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [form, setForm]         = useState({ name: "", email: "", comment: "" });
-  const [busy, setBusy]         = useState(false);
-  const [err, setErr]           = useState("");
-  const [ok, setOk]             = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    getComments(blogId).then(setComments).finally(() => setLoading(false));
-  }, [blogId]);
-
-  function addReply(parentId: number, reply: Comment) {
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === parentId ? { ...c, replies: [...(c.replies ?? []), reply] } : c
-      )
-    );
-  }
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.name.trim() || !form.comment.trim()) { setErr("Name and message are required."); return; }
-    setBusy(true); setErr("");
-    try {
-      const input: CommentInput = { blog_id: blogId, parent_id: null, ...form };
-      const c = await postComment(input);
-      setComments((prev) => [c, ...prev]);
-      setOk(true); setForm({ name: "", email: "", comment: "" });
-      formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    } catch (e: unknown) {
-      setErr((e as Error).message ?? "Failed to post comment.");
-    } finally { setBusy(false); }
-  }
-
-  return (
-    <div className="mt-14 pt-10 border-t border-slate-800/60">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-8">
-        <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
-        <h2 className="font-mono font-bold text-white text-lg uppercase tracking-widest">
-          COMMENTS
-          {!loading && (
-            <span className="ml-3 text-slate-600 text-sm">[ {comments.length} ]</span>
-          )}
-        </h2>
-        <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/20 to-transparent" />
-      </div>
-
-      {/* Loading */}
-      {loading && (
-        <div className="flex items-center gap-3 font-mono text-[11px] text-slate-600 py-6">
-          <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
-            className="inline-block w-3 h-3 border border-t-cyan-500 border-cyan-500/20 rounded-full" />
-          LOADING_COMMENTS...
-        </div>
-      )}
-
-      {/* Comment list */}
-      {!loading && (
-        <div className="space-y-5 mb-12">
-          {comments.length === 0 ? (
-            <div className="py-10 text-center font-mono text-slate-700 border border-slate-800/40 text-xs tracking-widest">
-              NO_COMMENTS_YET — BE_THE_FIRST
-            </div>
-          ) : (
-            comments.map((c) => (
-              <CommentItem key={c.id} comment={c} blogId={blogId} onReplyPosted={addReply} />
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Add comment form */}
-      <div className="bg-[#0b1426]/60 border border-cyan-500/10 p-6">
-        <div className="flex items-center gap-2 mb-5">
-          <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
-          <span className="font-mono text-[10px] text-slate-600 uppercase tracking-widest">POST_A_COMMENT</span>
-        </div>
-
-        {ok && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="mb-4 px-4 py-3 bg-green-500/10 border border-green-500/25 font-mono text-xs text-green-400 tracking-wider">
-            ✓ COMMENT_SUBMITTED — It may appear after moderation.
-          </motion.div>
-        )}
-
-        <form ref={formRef} onSubmit={submit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="font-mono text-[9px] text-slate-700 uppercase tracking-widest block mb-1.5">NAME *</label>
-              <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="Your name" className="w-full bg-black/30 border border-slate-700/60 focus:border-cyan-500/40 text-white placeholder-slate-700 font-mono text-xs px-3 py-2.5 outline-none transition-colors" />
-            </div>
-            <div>
-              <label className="font-mono text-[9px] text-slate-700 uppercase tracking-widest block mb-1.5">EMAIL (optional)</label>
-              <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                placeholder="your@email.com" className="w-full bg-black/30 border border-slate-700/60 focus:border-cyan-500/40 text-white placeholder-slate-700 font-mono text-xs px-3 py-2.5 outline-none transition-colors" />
-            </div>
-          </div>
-          <div>
-            <label className="font-mono text-[9px] text-slate-700 uppercase tracking-widest block mb-1.5">MESSAGE *</label>
-            <textarea value={form.comment} onChange={(e) => setForm((f) => ({ ...f, comment: e.target.value }))}
-              rows={4} placeholder="Share your thoughts..." className="w-full bg-black/30 border border-slate-700/60 focus:border-cyan-500/40 text-white placeholder-slate-700 font-mono text-xs px-3 py-2.5 outline-none resize-none transition-colors" />
-          </div>
-          {err && <p className="font-mono text-[10px] text-orange-400">[ERROR] {err}</p>}
-          <button type="submit" disabled={busy}
-            className="px-8 py-2.5 bg-transparent border border-orange-500/40 text-orange-300 font-mono text-xs uppercase tracking-widest hover:bg-orange-500/10 hover:border-orange-400/60 disabled:opacity-40 transition-all flex items-center gap-2"
-            style={{ clipPath: "polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)" }}>
-            {busy && <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.7, ease: "linear" }} className="inline-block w-3 h-3 border border-t-orange-400 border-orange-500/20 rounded-full" />}
-            {busy ? "ENCRYPTING..." : "> SUBMIT_COMMENT"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-
 export default function MarketplaceDetailPage() {
   const { slug } = useParams<{ slug: string }>();
 
-  const [marketplace, setMarketplace]         = useState<Marketplace | null>(null);
-  const [related, setRelated]         = useState<Marketplace[]>([]);
-  const [categories, setCategories]   = useState<{ type: string; count: number }[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState<string | null>(null);
-  const [readProgress, setProgress]   = useState(0);
+  const [product, setProduct]       = useState<DigitalProduct | null>(null);
+  const [related, setRelated]       = useState<Marketplace[]>([]);
+  const [categories, setCategories] = useState<{ type: string; count: number }[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState<string | null>(null);
+  const [readProgress, setProgress] = useState(0);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [liked, setLiked]           = useState(false);
+  const [liking, setLiking]         = useState(false);
+  const [likeCount, setLikeCount]   = useState(0);
+  const [comments, setComments]     = useState<ProductComment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [form, setForm]             = useState({ name: "", email: "", phone: "", comment: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [submitError, setSubmitError]   = useState<string | null>(null);
 
   useEffect(() => {
-    getAllMarketplaces()
-      .then((all) => {
-        const found = all.find((p) => p.slug === slug);
-        if (!found) throw new Error(`Marketplace "${slug}" not found`);
-        setMarketplace(found);
-        setCategories(extractMarketplaceCategories(all));
-        setRelated(
-          all
-            .filter((p) => p.slug !== slug)
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .slice(0, 5)
+    async function load() {
+      try {
+        const res = await fetch(
+          `${API_CONFIG.baseUrl}/api/get-single-digital-product/${slug}`,
+          { headers: { Accept: "application/json" }, cache: "no-store" },
         );
-      })
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+        const json = await res.json();
+
+        const found: DigitalProduct =
+          json?.data?.id       ? json.data :
+          json?.data?.data?.id ? json.data.data :
+          json?.id             ? json : null;
+
+        if (!found?.id) throw new Error(`Product "${slug}" not found`);
+        setProduct(found);
+        setLikeCount(found.total_likes ?? 0);
+        const storedLikes = JSON.parse(localStorage.getItem("liked_digital_products") || "[]") as number[];
+        setLiked(storedLikes.includes(found.id));
+        setComments(Array.isArray(found.comments) ? found.comments : []);
+
+        // sidebar — non-blocking
+        getAllMarketplaces()
+          .then((all) => {
+            setCategories(extractMarketplaceCategories(all));
+            setRelated(
+              all
+                .filter((p) => p.slug !== slug)
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, 5),
+            );
+          })
+          .catch(() => { /* sidebar degrades silently */ });
+      } catch (e) {
+        setError((e as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, [slug]);
+
+  async function fetchComments(productId: number) {
+    setCommentsLoading(true);
+    try {
+      const res = await fetch(
+        `${API_CONFIG.baseUrl}/api/get-digital-product-comments/${productId}`,
+        { headers: { Accept: "application/json" }, cache: "no-store" },
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      const list: ProductComment[] =
+        Array.isArray(json.data?.data) ? json.data.data :
+        Array.isArray(json.data)       ? json.data :
+        Array.isArray(json)            ? json : [];
+      setComments(list);
+    } catch { /* silent */ }
+    finally { setCommentsLoading(false); }
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!product) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch(
+        `${API_CONFIG.baseUrl}/api/submit-digital-product-comment/${product.id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ ...form, digital_product_id: product.id }),
+        },
+      );
+      const json = await res.json();
+      if (!res.ok) {
+        setSubmitError(json?.message ?? json?.error ?? "Submission failed.");
+        setSubmitStatus("error");
+        return;
+      }
+      setSubmitStatus("success");
+      setForm({ name: "", email: "", phone: "", comment: "" });
+      fetchComments(product.id);
+    } catch {
+      setSubmitError("Network error. Try again.");
+      setSubmitStatus("error");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleLike() {
+    if (!product || liking || liked) return;
+    setLiking(true);
+    try {
+      const res = await fetch(
+        `${API_CONFIG.baseUrl}/api/submit-digital-product-like/${product.id}`,
+        { method: "POST", headers: { Accept: "application/json", "Content-Type": "application/json" } },
+      );
+      if (res.status === 201 || res.status === 429) {
+        setLiked(true);
+        if (res.status === 201) setLikeCount((c) => c + 1);
+        const stored = JSON.parse(localStorage.getItem("liked_digital_products") || "[]") as number[];
+        localStorage.setItem("liked_digital_products", JSON.stringify([...new Set([...stored, product.id])]));
+      }
+    } catch { /* silent */ }
+    finally { setLiking(false); }
+  }
 
   useEffect(() => {
     const el = document.documentElement;
@@ -320,10 +226,16 @@ export default function MarketplaceDetailPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const tags       = parseTags(marketplace?.tags ?? null);
-  const techStack  = marketplace?.technology
-    ? marketplace.technology.split(",").map((t) => t.trim()).filter(Boolean)
+  const tags          = parseTags(product?.tags ?? null);
+  const techStack     = product?.technology
+    ? product.technology.split(",").map((t) => t.trim()).filter(Boolean)
     : [];
+  const galleryImages = parseArray(product?.gallery_images);
+  const features      = parseArray(product?.features);
+  const demoUrl       = product?.demo_url ?? product?.marketplace_url ?? null;
+  const hasSalePrice  = product?.sale_price !== null && product?.sale_price !== undefined && product?.sale_price !== "" && Number(product?.sale_price) > 0;
+  const displayPrice  = hasSalePrice ? product?.sale_price : product?.regular_price;
+  const originalPrice = hasSalePrice ? product?.regular_price : null;
 
   /* ── Loading ── */
   if (loading) return (
@@ -340,12 +252,12 @@ export default function MarketplaceDetailPage() {
   );
 
   /* ── Error ── */
-  if (error || !marketplace) return (
+  if (error || !product) return (
     <main className="min-h-screen bg-[#030014] flex items-center justify-center px-6">
       <div className="text-center font-mono space-y-4">
         <div className="text-7xl font-black text-slate-800/60">404</div>
         <div className="text-purple-400 text-sm tracking-widest">[PRODUCT_NOT_FOUND]</div>
-        <p className="text-slate-600 text-xs max-w-xs">{error ?? "The requested marketplace does not exist."}</p>
+        <p className="text-slate-600 text-xs max-w-xs">{error ?? "The requested product does not exist."}</p>
         <Link href="/marketplace">
           <button className="mt-4 px-6 py-2 border border-purple-500/40 text-purple-400 text-xs uppercase tracking-widest hover:bg-purple-500/10 transition-colors">
             &lt; RETURN_TO_PRODUCTS
@@ -355,7 +267,7 @@ export default function MarketplaceDetailPage() {
     </main>
   );
 
-  /* ── Marketplace detail ── */
+  /* ── Product detail ── */
   return (
     <main className="min-h-screen bg-[#030014] relative overflow-x-hidden">
 
@@ -376,8 +288,8 @@ export default function MarketplaceDetailPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-[#030014] z-10" />
         <div className="absolute inset-0 bg-purple-900/15 mix-blend-color z-[5]" />
         <img
-          src={thumb(marketplace.thumbnail_image)}
-          alt={marketplace.title || marketplace.name || "Marketplace"}
+          src={thumb(product.thumbnail_image)}
+          alt={product.title || product.name || "Product"}
           className="w-full h-full object-cover"
           onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
         />
@@ -393,14 +305,14 @@ export default function MarketplaceDetailPage() {
             <span className="text-slate-700">/</span>
             <Link href="/marketplace" className="hover:text-purple-400 transition-colors">marketplace</Link>
             <span className="text-slate-700">/</span>
-            <span className="text-purple-400 truncate max-w-[200px] sm:max-w-none">{marketplace.slug}</span>
+            <span className="text-purple-400 truncate max-w-[200px] sm:max-w-none">{product.slug}</span>
           </motion.div>
         </div>
       </div>
 
       {/* ── Main wrapper ── */}
       <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 -mt-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-10">
 
           {/* ════ LEFT: article ════ */}
           <article className="lg:col-span-8 min-w-0">
@@ -409,60 +321,164 @@ export default function MarketplaceDetailPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
               {/* Badges */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {marketplace.category && (
+                {product.category && (
                   <span className="px-3 py-1 bg-purple-950/60 border border-purple-500/25 text-purple-300 font-mono text-[9px] uppercase tracking-widest">
-                    [{marketplace.category.substring(0, 30)}]
+                    [{product.category.substring(0, 30)}]
                   </span>
                 )}
-                {marketplace.is_featured === 1 && (
+                {product.is_featured === 1 && (
                   <span className="px-3 py-1 bg-cyan-500/15 border border-cyan-500/35 text-cyan-300 font-mono text-[9px] uppercase tracking-widest">
                     ★ FEATURED
                   </span>
                 )}
                 <span className="flex items-center gap-1 px-3 py-1 bg-green-950/40 border border-green-500/20 text-green-400 font-mono text-[9px] uppercase tracking-widest">
                   <span className="w-1 h-1 bg-green-400 rounded-full animate-pulse" />
-                  {marketplace.status}
+                  {product.status}
                 </span>
               </div>
 
-              <h1 className="font-mono font-black text-2xl sm:text-3xl md:text-4xl text-white leading-tight mb-5">
-                {marketplace.title || marketplace.name}
-              </h1>
+              {/* Title + VISIT + LIKE */}
+              <div className="flex items-start justify-between gap-4 mb-5">
+                <h1 className="font-mono font-black text-2xl sm:text-3xl md:text-4xl text-white leading-tight">
+                  {product.title || product.name}
+                </h1>
+                <div className="flex items-center gap-2 mt-1 shrink-0">
+                  {demoUrl && (
+                    <a
+                      href={demoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-purple-500/10 border border-purple-500/40 text-purple-300 font-mono text-[10px] uppercase tracking-widest hover:bg-purple-500/20 hover:border-purple-400 hover:shadow-[0_0_14px_rgba(168,85,247,0.3)] transition-all"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      VISIT
+                    </a>
+                  )}
+                  <button
+                    onClick={handleLike}
+                    disabled={liking || liked}
+                    className={`flex items-center gap-1.5 px-3 py-2 border font-mono text-[10px] uppercase tracking-widest transition-all disabled:cursor-not-allowed ${
+                      liked
+                        ? "bg-rose-500/20 border-rose-500/60 text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.25)]"
+                        : "bg-slate-900/40 border-slate-700/50 text-slate-500 hover:border-rose-500/40 hover:text-rose-400"
+                    }`}
+                  >
+                    <svg className="w-3.5 h-3.5" fill={liked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    {liking ? "..." : liked ? "LIKED" : "LIKE"}
+                    {likeCount > 0 && <span className="opacity-60">[{likeCount}]</span>}
+                  </button>
+                </div>
+              </div>
 
               {/* Meta */}
               <div className="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs text-slate-600 pb-5 border-b border-slate-800/60">
-                {marketplace.start_date && (
+                {product.start_date && (
                   <span className="flex items-center gap-1.5">
                     <svg className="w-3 h-3 text-purple-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    START: {fmtDate(marketplace.start_date)}
+                    RELEASED: {fmtDate(product.start_date)}
                   </span>
                 )}
-                {marketplace.end_date && (
+                {product.version && (
                   <span className="flex items-center gap-1.5">
-                    <svg className="w-3 h-3 text-purple-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    END: {fmtDate(marketplace.end_date)}
+                    <span className="text-purple-800">v</span>
+                    {product.version}
                   </span>
                 )}
                 <span className="flex items-center gap-1.5">
                   <span className="text-slate-700">#</span>
-                  <span className="text-slate-700">ID:{marketplace.id}</span>
+                  <span className="text-slate-700">ID:{product.id}</span>
                 </span>
               </div>
             </motion.div>
 
-            {/* Description lead */}
-            <motion.p
+            {/* Description + gallery strip */}
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.15 }}
-              className="font-mono text-slate-300 text-sm sm:text-[15px] leading-relaxed border-l-2 border-purple-500/35 pl-5 mb-10 italic"
+              className="flex gap-0 mb-10"
             >
-              {marketplace.description}
-            </motion.p>
+              {/* Left: gallery thumbnail strip */}
+              {galleryImages.length > 0 && (
+                <div className="flex flex-col gap-2 w-[80px] sm:w-[96px] shrink-0 pr-4 border-r border-purple-500/25 mr-5">
+                  <span className="font-mono text-[8px] text-slate-700 uppercase tracking-widest mb-1">
+                    {galleryImages.length} IMG
+                  </span>
+                  {galleryImages.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setLightboxIdx(i)}
+                      className="w-full aspect-video overflow-hidden border border-purple-500/20 hover:border-purple-400/60 transition-colors group relative"
+                    >
+                      <img
+                        src={thumb(img)}
+                        alt={`Screenshot ${i + 1}`}
+                        className="w-full h-full object-cover opacity-75 group-hover:opacity-100 group-hover:scale-105 transition-all duration-400"
+                        onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {/* Right: description */}
+              <p className="flex-1 font-mono text-slate-300 text-sm sm:text-[15px] leading-relaxed border-l-2 border-purple-500/35 pl-5 italic">
+                {stripHtml(product.description)}
+              </p>
+            </motion.div>
+
+            {/* Lightbox */}
+            {lightboxIdx !== null && galleryImages.length > 0 && (
+              <div
+                className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4"
+                onClick={() => setLightboxIdx(null)}
+              >
+                <button
+                  className="absolute top-4 right-5 font-mono text-slate-400 hover:text-white text-xl transition-colors z-10"
+                  onClick={() => setLightboxIdx(null)}
+                >
+                  ✕
+                </button>
+                <button
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center border border-slate-700 text-slate-400 hover:text-white hover:border-purple-400 transition-all font-mono z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIdx((lightboxIdx - 1 + galleryImages.length) % galleryImages.length);
+                  }}
+                >
+                  ‹
+                </button>
+                <img
+                  src={thumb(galleryImages[lightboxIdx])}
+                  alt={`Screenshot ${lightboxIdx + 1}`}
+                  className="max-w-full max-h-[85vh] object-contain border border-purple-500/20"
+                  onClick={(e) => e.stopPropagation()}
+                  onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
+                />
+                <button
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center border border-slate-700 text-slate-400 hover:text-white hover:border-purple-400 transition-all font-mono z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIdx((lightboxIdx + 1) % galleryImages.length);
+                  }}
+                >
+                  ›
+                </button>
+                <span className="absolute bottom-4 font-mono text-[10px] text-slate-600">
+                  {lightboxIdx + 1} / {galleryImages.length}
+                </span>
+              </div>
+            )}
 
             {/* Tech stack */}
             {techStack.length > 0 && (
@@ -490,7 +506,7 @@ export default function MarketplaceDetailPage() {
             )}
 
             {/* Content */}
-            {marketplace.content && (
+            {product.content && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
                 <div className="flex items-center gap-3 mb-6">
                   <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">// CONTENT</span>
@@ -498,7 +514,7 @@ export default function MarketplaceDetailPage() {
                 </div>
                 <div
                   className="marketplace-content font-mono text-slate-400 text-[13px] leading-[1.95]"
-                  dangerouslySetInnerHTML={{ __html: toHTML(marketplace.content) }}
+                  dangerouslySetInnerHTML={{ __html: toHTML(product.content) }}
                 />
               </motion.div>
             )}
@@ -528,24 +544,22 @@ export default function MarketplaceDetailPage() {
               </motion.div>
             )}
 
-            <CommentsSection blogId={marketplace.id} />
-
-            {/* Marketplace links */}
-            {(marketplace.marketplace_url || marketplace.github_url) && (
+            {/* Product links */}
+            {(demoUrl || product.github_url) && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.45 }}
                 className="mt-10 pt-8 border-t border-slate-800/40"
               >
                 <div className="flex items-center gap-3 mb-5">
-                  <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">// PROJECT_LINKS</span>
+                  <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">// PRODUCT_LINKS</span>
                   <div className="flex-1 h-px bg-gradient-to-r from-purple-500/15 to-transparent" />
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {marketplace.marketplace_url && (
+                  {demoUrl && (
                     <a
-                      href={marketplace.marketplace_url}
+                      href={demoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 px-5 py-2.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-xs uppercase tracking-widest hover:bg-purple-500/20 hover:border-purple-400/50 transition-all"
@@ -557,9 +571,9 @@ export default function MarketplaceDetailPage() {
                       LIVE_DEMO
                     </a>
                   )}
-                  {marketplace.github_url && (
+                  {product.github_url && (
                     <a
-                      href={marketplace.github_url}
+                      href={product.github_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 px-5 py-2.5 bg-slate-900/60 border border-slate-700/50 text-slate-300 font-mono text-xs uppercase tracking-widest hover:bg-slate-800/60 hover:border-slate-500/60 hover:text-white transition-all"
@@ -574,6 +588,147 @@ export default function MarketplaceDetailPage() {
                 </div>
               </motion.div>
             )}
+
+            {/* ── Comments ── */}
+            <section className="mt-16 pt-10 border-t border-slate-800/40">
+              <div className="flex items-center gap-3 mb-8">
+                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
+                <span className="font-mono text-[9px] text-slate-600 uppercase tracking-[0.2em]">// COMMENTS</span>
+                {!commentsLoading && (
+                  <span className="font-mono text-[9px] text-slate-700">[{comments.length}]</span>
+                )}
+                <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/15 to-transparent" />
+              </div>
+
+              {/* Comment list */}
+              <div className="space-y-5 mb-12">
+                {commentsLoading && (
+                  <div className="space-y-4">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="bg-[#0d0a1e]/60 border border-slate-800/60 p-4 animate-pulse">
+                        <div className="h-2.5 w-24 bg-slate-800 rounded mb-3" />
+                        <div className="h-2 w-full bg-slate-800/60 rounded mb-2" />
+                        <div className="h-2 w-3/4 bg-slate-800/40 rounded" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!commentsLoading && comments.length === 0 && (
+                  <div className="py-8 text-center font-mono text-slate-700 text-xs tracking-widest border border-dashed border-slate-800">
+                    [ NO_COMMENTS_YET ] — be first
+                  </div>
+                )}
+                {!commentsLoading && comments.map((c) => (
+                  <div key={c.id} className="bg-[#0d0a1e]/60 border border-slate-800/60 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center bg-purple-950/60 border border-purple-500/20 font-mono text-[10px] text-purple-400">
+                          {(c.name ?? "Anonymous")[0].toUpperCase()}
+                        </span>
+                        <span className="font-mono text-xs text-slate-300">{c.name ?? "Anonymous"}</span>
+                      </div>
+                      <span className="font-mono text-[9px] text-slate-700">{fmtDate(c.created_at, true)}</span>
+                    </div>
+                    <p className="font-mono text-[13px] text-slate-400 leading-relaxed border-l border-slate-700/60 pl-3 mb-0">
+                      {c.comment}
+                    </p>
+
+                    {/* Nested replies */}
+                    {c.replies && c.replies.length > 0 && (
+                      <div className="mt-4 ml-4 space-y-3 border-l-2 border-purple-500/15 pl-4">
+                        {c.replies.map((r) => (
+                          <div key={r.id} className="bg-[#030014]/60 border border-slate-800/40 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 h-5 flex items-center justify-center bg-cyan-950/60 border border-cyan-500/20 font-mono text-[9px] text-cyan-500">
+                                  {(r.name ?? "A")[0].toUpperCase()}
+                                </span>
+                                <span className="font-mono text-[11px] text-slate-400">{r.name ?? "Admin"}</span>
+                                <span className="font-mono text-[8px] text-purple-700 uppercase tracking-widest">↩ reply</span>
+                              </div>
+                              <span className="font-mono text-[9px] text-slate-700">{fmtDate(r.created_at, true)}</span>
+                            </div>
+                            <p className="font-mono text-[12px] text-slate-500 leading-relaxed border-l border-cyan-500/15 pl-3">
+                              {r.comment}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Submit form */}
+              <div className="bg-[#0d0a1e]/60 border border-slate-800/60 p-5 mb-8">
+                <div className="flex items-center gap-2 mb-5">
+                  <span className="w-1 h-1 bg-purple-400 rounded-full animate-pulse" />
+                  <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">LEAVE_COMMENT</span>
+                </div>
+
+                {submitStatus === "success" ? (
+                  <div className="py-6 text-center font-mono text-green-400 text-xs tracking-widest border border-green-500/20 bg-green-950/20">
+                    ✓ COMMENT_SUBMITTED — thank you
+                    <button
+                      onClick={() => setSubmitStatus("idle")}
+                      className="block mx-auto mt-3 text-slate-600 hover:text-slate-300 text-[10px] transition-colors"
+                    >
+                      [ ADD_ANOTHER ]
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {(["name", "email", "phone"] as const).map((field) => (
+                        <div key={field}>
+                          <label className="block font-mono text-[8px] text-slate-700 uppercase tracking-widest mb-1">
+                            {field}
+                          </label>
+                          <input
+                            type={field === "email" ? "email" : "text"}
+                            value={form[field]}
+                            onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
+                            placeholder={
+                              field === "email" ? "user@domain.com" :
+                              field === "phone" ? "+1 000 000 0000" : "Your name"
+                            }
+                            className="w-full bg-[#030014] border border-slate-800 hover:border-slate-700 focus:border-purple-500/50 focus:outline-none text-slate-300 font-mono text-[11px] placeholder:text-slate-800 py-2 px-3 transition-colors"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <label className="block font-mono text-[8px] text-slate-700 uppercase tracking-widest mb-1">
+                        comment <span className="text-purple-700">*</span>
+                      </label>
+                      <textarea
+                        required
+                        minLength={5}
+                        maxLength={5000}
+                        rows={4}
+                        value={form.comment}
+                        onChange={(e) => setForm((f) => ({ ...f, comment: e.target.value }))}
+                        placeholder="Write your comment..."
+                        className="w-full bg-[#030014] border border-slate-800 hover:border-slate-700 focus:border-purple-500/50 focus:outline-none text-slate-300 font-mono text-[11px] placeholder:text-slate-800 py-2 px-3 transition-colors resize-none"
+                      />
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="font-mono text-[9px] text-slate-800">{form.comment.length}/5000</span>
+                        {submitError && (
+                          <span className="font-mono text-[9px] text-red-500">{submitError}</span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={submitting || form.comment.trim().length < 5}
+                      className="px-6 py-2.5 bg-purple-500/10 border border-purple-500/40 text-purple-300 font-mono text-[10px] uppercase tracking-widest hover:bg-purple-500/20 hover:border-purple-400/60 hover:shadow-[0_0_14px_rgba(168,85,247,0.2)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      {submitting ? "SUBMITTING..." : "> SUBMIT_COMMENT"}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </section>
 
             {/* Bottom nav */}
             <div className="mt-12 pt-6 border-t border-slate-800/40 flex items-center justify-between">
@@ -606,38 +761,63 @@ export default function MarketplaceDetailPage() {
                     <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)]" />
                     <span className="font-mono text-[10px] text-green-400 uppercase tracking-[0.2em] font-bold">Lifetime Access</span>
                   </div>
-                  
+
                   <div className="mb-6 pb-6 border-b border-green-500/20">
                     <div className="flex items-end gap-2 mb-2">
-                       <span className="text-4xl text-white font-black leading-none">$99.00</span>
-                       <span className="text-slate-400 text-sm mb-1 font-mono">USD</span>
+                      {displayPrice ? (
+                        <>
+                          <span className="text-4xl text-white font-black leading-none">{formatPrice(displayPrice)}</span>
+                          <span className="text-slate-400 text-sm mb-1 font-mono">USD</span>
+                          {originalPrice && (
+                            <span className="text-slate-600 text-sm mb-1 font-mono line-through ml-1">{formatPrice(originalPrice)}</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-2xl text-green-400 font-black leading-none font-mono">FREE</span>
+                      )}
                     </div>
-                    <p className="text-slate-400 text-xs font-mono leading-relaxed mt-3">
-                      Includes full source code, comprehensive documentation, and lifetime free updates for this product.
-                    </p>
+                    {hasSalePrice && (
+                      <span className="inline-block px-2 py-0.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 font-mono text-[9px] uppercase tracking-widest">
+                        SALE
+                      </span>
+                    )}
+                    {product.short_description && (
+                      <p className="text-slate-400 text-xs font-mono leading-relaxed mt-3">
+                        {stripHtml(product.short_description)}
+                      </p>
+                    )}
                   </div>
 
-                  <ul className="space-y-3 mb-8 font-mono text-[10px] text-slate-300">
-                    <li className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                      Instant Digital Download
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                      Commercial Use License
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                      6 Months Technical Support
-                    </li>
-                  </ul>
+                  {features.length > 0 ? (
+                    <ul className="space-y-3 mb-8 font-mono text-[10px] text-slate-300">
+                      {features.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2.5">
+                          <svg className="w-4 h-4 text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                          </svg>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <ul className="space-y-3 mb-8 font-mono text-[10px] text-slate-300">
+                      {["Instant Digital Download", "Commercial Use License", "6 Months Technical Support"].map((item) => (
+                        <li key={item} className="flex items-center gap-2.5">
+                          <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                          </svg>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
-                  <Link href={`/marketplace/${marketplace.slug}/checkout`}>
+                  <Link href={`/marketplace/${product.slug}/checkout`}>
                     <button className="w-full relative py-4 px-6 bg-green-500 text-black font-bold uppercase tracking-widest text-xs rounded-xl overflow-hidden group/buy shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] transition-all">
                       <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/buy:translate-y-0 transition-transform duration-300 ease-out" />
                       <span className="relative flex items-center justify-center gap-3">
                         <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                         Secure Checkout
                       </span>
@@ -646,13 +826,12 @@ export default function MarketplaceDetailPage() {
                 </div>
               </motion.div>
 
-
-              {/* Marketplace meta */}
+              {/* Product meta */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-[#0d0a1e]/70 border border-purple-500/12 p-5"
+                className="bg-[#0d0a1e]/70 border border-slate-800/60 p-5"
               >
                 <div className="flex items-center gap-2 mb-4">
                   <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" />
@@ -660,12 +839,13 @@ export default function MarketplaceDetailPage() {
                 </div>
                 <ul className="space-y-3">
                   {[
-                    { k: "STATUS",    v: marketplace.status.toUpperCase() },
-                    { k: "CATEGORY",  v: marketplace.category ?? "—" },
-                    { k: "START",     v: fmtDate(marketplace.start_date) },
-                    { k: "END",       v: fmtDate(marketplace.end_date) },
-                    { k: "CREATED",   v: fmtDate(marketplace.created_at) },
-                    { k: "MOD_ID",    v: `#${marketplace.id}` },
+                  
+           
+                    { k: "CREATED",     v: fmtDate(product.created_at) },
+                    { k: "VERSION",     v: product.version ?? "—" },
+                    { k: "TOTAL_LIKES", v: String(likeCount) },
+                    { k: "TOTAL_VIEWS", v: String(product.total_views ?? 0) },
+           
                   ].map(({ k, v }) => (
                     <li key={k} className="flex items-start justify-between gap-2">
                       <span className="font-mono text-[9px] text-slate-700 uppercase tracking-widest shrink-0">{k}</span>
@@ -675,11 +855,11 @@ export default function MarketplaceDetailPage() {
                 </ul>
 
                 {/* Quick links inside metadata */}
-                {(marketplace.marketplace_url || marketplace.github_url) && (
+                {(demoUrl || product.github_url) && (
                   <div className="mt-4 pt-4 border-t border-purple-500/10 space-y-2">
-                    {marketplace.marketplace_url && (
+                    {demoUrl && (
                       <a
-                        href={marketplace.marketplace_url}
+                        href={demoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 font-mono text-[10px] text-purple-500 hover:text-purple-300 transition-colors"
@@ -690,9 +870,9 @@ export default function MarketplaceDetailPage() {
                         LIVE_PREVIEW
                       </a>
                     )}
-                    {marketplace.github_url && (
+                    {product.github_url && (
                       <a
-                        href={marketplace.github_url}
+                        href={product.github_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 font-mono text-[10px] text-slate-500 hover:text-slate-200 transition-colors"
@@ -713,7 +893,7 @@ export default function MarketplaceDetailPage() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.25 }}
-                  className="bg-[#0d0a1e]/70 border border-purple-500/12 p-5"
+                  className="bg-[#0d0a1e]/70 border border-slate-800/60 p-5"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
@@ -723,7 +903,7 @@ export default function MarketplaceDetailPage() {
                     {techStack.map((tech, i) => (
                       <span
                         key={i}
-                        className="px-2 py-0.5 bg-purple-950/40 border border-purple-500/20 text-purple-400 font-mono text-[9px] uppercase"
+                        className="px-2 py-0.5 bg-purple-950/40 border border-slate-800/60text-purple-400 font-mono text-[9px] uppercase"
                       >
                         {tech}
                       </span>
@@ -732,13 +912,13 @@ export default function MarketplaceDetailPage() {
                 </motion.div>
               )}
 
-              {/* Related marketplace */}
+              {/* Related products */}
               {related.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="bg-[#0d0a1e]/70 border border-purple-500/12 p-5"
+                  className="bg-[#0d0a1e]/70 border border-slate-800/60 p-5"
                 >
                   <div className="flex items-center gap-2 mb-4">
                     <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
@@ -750,7 +930,7 @@ export default function MarketplaceDetailPage() {
                         <div className="w-14 h-14 shrink-0 overflow-hidden border border-purple-500/10 group-hover:border-orange-400/30 transition-colors">
                           <img
                             src={thumb(p.thumbnail_image)}
-                            alt={p.title || p.name || "Marketplace"}
+                            alt={p.title || p.name || "Product"}
                             className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                             onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
                           />
@@ -830,7 +1010,8 @@ export default function MarketplaceDetailPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.55 }}
               >
-                <Link href="/marketplace"
+                <Link
+                  href="/marketplace"
                   className="flex items-center justify-center gap-2 w-full py-3 border border-purple-500/15 text-slate-600 font-mono text-[10px] uppercase tracking-widest hover:border-purple-500/30 hover:text-purple-400 transition-all"
                 >
                   &lt; ALL_PRODUCTS
@@ -841,7 +1022,7 @@ export default function MarketplaceDetailPage() {
         </div>
       </div>
 
-      {/* Marketplace prose styles */}
+      {/* Prose styles */}
       <style>{`
         .marketplace-content h1,.marketplace-content h2,.marketplace-content h3,.marketplace-content h4{color:#e2e8f0;font-weight:700;margin:1.6em 0 .5em;line-height:1.3}
         .marketplace-content h1{font-size:1.5rem}.marketplace-content h2{font-size:1.25rem;border-left:2px solid rgba(168,85,247,.35);padding-left:.75rem}.marketplace-content h3{font-size:1.05rem;color:#c4b5fd}

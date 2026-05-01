@@ -7,33 +7,33 @@
  * Never hard-code the base URL anywhere else — always import from this file.
  */
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 export const API_CONFIG = {
   baseUrl: BASE_URL,
 
   endpoints: {
-     projects: {
+    projects: {
       getAll: `${BASE_URL}/api/get-all-projects`,
       getOne: `${BASE_URL}/api/get-single-projects`,
-    },
-    blogs: {
-      getAll: `${BASE_URL}/api/get-all-blogs`,
-      getOne: `${BASE_URL}/api/get-blog`,
-    },
-   
-    marketplaces: {
-      getAll: `${BASE_URL}/api/get-all-projects`, // Reusing projects endpt for now, or you can specify actual
-      getOne: `${BASE_URL}/api/get-project`,         // GET /{slug}
-    },
-    comments: {
-      getByBlog: `${BASE_URL}/api/get-blog-comments`,
-      create: `${BASE_URL}/api/post-blog-comment`,
     },
     projectComments: {
       get: `${BASE_URL}/api/get-projects-comments`,
       submit: `${BASE_URL}/api/submit-project-comment`,
+    },
+
+    marketplaces: {
+      getAll: `${BASE_URL}/api/get-all-digital-products`,
+      getOne: `${BASE_URL}/api/get-single-digital-product`,
+    },
+
+    blogs: {
+      getAll: `${BASE_URL}/api/get-all-blogs`,
+      getOne: `${BASE_URL}/api/get-blog`,
+    },
+    comments: {
+      getByBlog: `${BASE_URL}/api/get-blog-comments`,
+      create: `${BASE_URL}/api/post-blog-comment`,
     },
   },
 

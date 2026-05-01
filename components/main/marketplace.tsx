@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getAllMarketplaces, parseTags, type Marketplace } from "@/lib/services/marketplace";
+import { getFeaturedMarketplaces, parseTags, type Marketplace } from "@/lib/services/marketplace";
 import { API_CONFIG } from "@/config/api";
 
 const DUMMY_IMG =
@@ -14,7 +14,20 @@ const INITIAL_VISIBLE = 6;
 function thumb(path: string | null): string {
   if (!path) return DUMMY_IMG;
   if (path.startsWith("http")) return path;
-  return `${API_CONFIG.baseUrl}/storage/${path}`;
+  return `${API_CONFIG.baseUrl}/${path}`;
+}
+
+function stripHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
+}
+
+function fmtPrice(sale: unknown, regular: unknown): string {
+  const v = (sale !== null && sale !== undefined && sale !== "" && Number(sale) > 0) ? sale : regular;
+  if (v === null || v === undefined || v === "") return "FREE";
+  const n = Number(v);
+  if (isNaN(n)) return "FREE";
+  return `$${Math.floor(n)}`;
 }
 
 export const Marketplaces = () => {
@@ -23,7 +36,7 @@ export const Marketplaces = () => {
   const [error, setError]       = useState<string | null>(null);
 
   useEffect(() => {
-    getAllMarketplaces()
+    getFeaturedMarketplaces()
       .then(setMarketplaces)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -213,7 +226,7 @@ export const Marketplaces = () => {
                           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(168,85,247,0.08)_51%)] bg-[length:100%_4px] pointer-events-none" />
                           {/* Price badge */}
                           <div className="absolute top-2 right-2 z-10 bg-green-500 text-black font-mono font-bold text-[9px] px-2.5 py-1 shadow-[0_0_16px_rgba(34,197,94,0.7)] uppercase tracking-wider">
-                            $99.00
+                            {fmtPrice(marketplace.sale_price, marketplace.regular_price)}
                           </div>
                           {marketplace.is_featured === 1 && (
                             <span className="absolute top-2 left-2 z-10 px-2 py-0.5 bg-orange-500/85 font-mono text-[8px] text-white uppercase tracking-widest">★ FEATURED</span>
@@ -224,8 +237,8 @@ export const Marketplaces = () => {
                         <h3 className="text-base sm:text-lg font-bold font-mono text-white mb-2 group-hover:text-purple-300 transition-colors relative z-10 leading-snug">
                           {marketplace.title || marketplace.name}
                         </h3>
-                        <p className="text-slate-400 text-xs sm:text-sm font-mono leading-relaxed mb-4 flex-grow border-l-2 border-purple-500/30 pl-3">
-                          {marketplace.description}
+                        <p className="text-slate-400 text-xs sm:text-sm font-mono leading-relaxed mb-4 flex-grow border-l-2 border-purple-500/30 pl-3 line-clamp-3">
+                          {stripHtml(marketplace.description)}
                         </p>
 
                         {/* Footer */}
@@ -288,11 +301,11 @@ export const Marketplaces = () => {
                     <div className="absolute bottom-0 right-0 w-full h-[1px] bg-gradient-to-l from-transparent via-purple-400 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700" />
                     <div className="flex items-center gap-3 relative z-10">
                       <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
-                      VIEW_ALL_MARKETPLACE
+                      VIEW_ALL_PRODUCTS
                       <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                       </svg>
-                      <span className="text-slate-600 ml-1 text-[10px]">[ {marketplaces.length}_MODULES ]</span>
+                     
                     </div>
                   </motion.div>
                 </Link>
