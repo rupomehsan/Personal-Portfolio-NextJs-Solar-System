@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  getAllProjects,
+  getFeaturedProjects,
   parseTags,
   type Project,
 } from "@/lib/services/project";
@@ -36,13 +36,37 @@ export const Projects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [likedMap, setLikedMap] = useState<Record<number, boolean>>({});
+  const [likingIds, setLikingIds] = useState<number[]>([]);
 
   useEffect(() => {
-    getAllProjects()
+    getFeaturedProjects()
       .then(setProjects)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
+
+    const stored = JSON.parse(localStorage.getItem('liked_projects') || '[]') as number[];
+    const map: Record<number, boolean> = {};
+    stored.forEach((id) => { map[id] = true; });
+    setLikedMap(map);
   }, []);
+
+  async function handleLike(projectId: number) {
+    if (likingIds.includes(projectId) || likedMap[projectId]) return;
+    setLikingIds((prev) => [...prev, projectId]);
+    try {
+      const res = await fetch(
+        `${API_CONFIG.baseUrl}/api/submit-project-like/${projectId}`,
+        { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' } },
+      );
+      if (res.status === 201 || res.status === 429) {
+        setLikedMap((prev) => ({ ...prev, [projectId]: true }));
+        const stored = JSON.parse(localStorage.getItem('liked_projects') || '[]') as number[];
+        localStorage.setItem('liked_projects', JSON.stringify([...new Set([...stored, projectId])]));
+      }
+    } catch { /* silent */ }
+    finally { setLikingIds((prev) => prev.filter((id) => id !== projectId)); }
+  }
 
   const visible = projects.slice(0, INITIAL_VISIBLE);
 
@@ -448,6 +472,20 @@ export const Projects = () => {
                                 <span className="w-1 h-1 rounded-full bg-red-900" />
                               </div>
                             )}
+
+                            <button
+                              onClick={() => handleLike(project.id)}
+                              disabled={likingIds.includes(project.id) || likedMap[project.id]}
+                              className={`shrink-0 px-2.5 py-1.5 border font-mono transition-all disabled:cursor-not-allowed ${
+                                likedMap[project.id]
+                                  ? "bg-rose-500/20 border-rose-500/50 text-rose-400"
+                                  : "border-slate-700/50 text-slate-600 hover:border-rose-500/40 hover:text-rose-400"
+                              }`}
+                            >
+                              <svg className="w-3 h-3" fill={likedMap[project.id] ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                              </svg>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -491,9 +529,7 @@ export const Projects = () => {
                           d="M14 5l7 7m0 0l-7 7m7-7H3"
                         />
                       </svg>
-                      <span className="text-slate-600 ml-1 text-[10px]">
-                        [ {projects.length}_MODULES ]
-                      </span>
+                      
                     </div>
                   </motion.div>
                 </Link>

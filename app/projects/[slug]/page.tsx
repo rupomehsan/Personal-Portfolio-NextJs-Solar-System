@@ -91,7 +91,9 @@ export default function ProjectDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [readProgress, setProgress] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
-  const [liked, setLiked]             = useState(false);
+  const [liked, setLiked]   = useState(false);
+  const [liking, setLiking] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState<ProjectComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [form, setForm] = useState({
@@ -124,7 +126,15 @@ export default function ProjectDetailPage() {
 
         if (!found?.id) throw new Error(`Project "${slug}" not found`);
         setProject(found);
-        fetchComments(found.id);
+        setLikeCount(found.total_likes ?? 0);
+        const storedLikes = JSON.parse(localStorage.getItem('liked_projects') || '[]') as number[];
+        setLiked(storedLikes.includes(found.id));
+
+        // Comments are embedded in the single-project response — no separate fetch needed
+        const embeddedComments: ProjectComment[] = Array.isArray((found as unknown as Record<string, unknown>).comments)
+          ? (found as unknown as Record<string, unknown>).comments as ProjectComment[]
+          : [];
+        setComments(embeddedComments);
 
         // 2. Load sidebar data independently (non-blocking for main project)
         getAllProjects()
@@ -207,6 +217,28 @@ export default function ProjectDetailPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleLike() {
+    if (!project || liking || liked) return;
+    setLiking(true);
+    try {
+      const res = await fetch(
+        `${API_CONFIG.baseUrl}/api/submit-project-like/${project.id}`,
+        { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' } },
+      );
+      if (res.status === 201) {
+        setLiked(true);
+        setLikeCount((c) => c + 1);
+        const stored = JSON.parse(localStorage.getItem('liked_projects') || '[]') as number[];
+        localStorage.setItem('liked_projects', JSON.stringify([...new Set([...stored, project.id])]));
+      } else if (res.status === 429) {
+        setLiked(true);
+        const stored = JSON.parse(localStorage.getItem('liked_projects') || '[]') as number[];
+        localStorage.setItem('liked_projects', JSON.stringify([...new Set([...stored, project.id])]));
+      }
+    } catch { /* silent */ }
+    finally { setLiking(false); }
   }
 
   useEffect(() => {
@@ -368,8 +400,9 @@ export default function ProjectDetailPage() {
                     </a>
                   )}
                   <button
-                    onClick={() => setLiked((v) => !v)}
-                    className={`flex items-center gap-1.5 px-3 py-2 border font-mono text-[10px] uppercase tracking-widest transition-all ${
+                    onClick={handleLike}
+                    disabled={liking || liked}
+                    className={`flex items-center gap-1.5 px-3 py-2 border font-mono text-[10px] uppercase tracking-widest transition-all disabled:cursor-not-allowed ${
                       liked
                         ? "bg-rose-500/20 border-rose-500/60 text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.25)]"
                         : "bg-slate-900/40 border-slate-700/50 text-slate-500 hover:border-rose-500/40 hover:text-rose-400"
@@ -378,7 +411,8 @@ export default function ProjectDetailPage() {
                     <svg className="w-3.5 h-3.5" fill={liked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
-                    {liked ? "LIKED" : "LIKE"}
+                    {liking ? "..." : liked ? "LIKED" : "LIKE"}
+                    {likeCount > 0 && <span className="opacity-60">[{likeCount}]</span>}
                   </button>
                 </div>
               </div>
@@ -422,8 +456,8 @@ export default function ProjectDetailPage() {
                   </span>
                 )}
                 <span className="flex items-center gap-1.5">
-                  <span className="text-slate-700">#</span>
-                  <span className="text-slate-700">ID:{project.id}</span>
+                  <span className="text-slate-700">Project Details</span>
+             
                 </span>
               </div>
             </motion.div>
@@ -648,10 +682,10 @@ export default function ProjectDetailPage() {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="w-6 h-6 flex items-center justify-center bg-purple-950/60 border border-purple-500/20 font-mono text-[10px] text-purple-400">
-                            {(c.name ?? "A")[0].toUpperCase()}
+                            {(c.name ?? "Anonymous")[0].toUpperCase()}
                           </span>
                           <span className="font-mono text-xs text-slate-300">
-                            {c.name ?? "Admin"}
+                            {c.name ?? "Anonymous"}
                           </span>
                         </div>
                         <span className="font-mono text-[9px] text-slate-700">
@@ -698,7 +732,7 @@ export default function ProjectDetailPage() {
               </div>
 
               {/* Submit form */}
-              <div className="bg-[#0d0a1e]/60 border border-purple-500/12 p-5">
+              <div className="bg-[#0d0a1e]/60 border border-slate-800/60  p-5 mb-8">
                 <div className="flex items-center gap-2 mb-5">
                   <span className="w-1 h-1 bg-purple-400 rounded-full animate-pulse" />
                   <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">
@@ -793,19 +827,19 @@ export default function ProjectDetailPage() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-[#0d0a1e]/70 border border-purple-500/12 p-5"
+                className="bg-[#0d0a1e]/70 border border-slate-800/60 border-purple-500/12 p-5"
               >
                 <div className="flex items-center gap-2 mb-4">
                   <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" />
                   <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">
-                    MODULE_METADATA
+                    PROJECT_METADATA
                   </span>
                 </div>
                 <ul className="space-y-3">
                   {[
-                    { k: "STATUS", v: project.status.toUpperCase() },
-                    { k: "CREATED", v: fmtDate(project.created_at) },
-                    { k: "MOD_ID", v: `#${project.id}` },
+                    { k: "CREATED", v: fmtDate(project.created_at) },           
+                    { k: "TOTAL_LIKES", v: String(likeCount) },
+                    { k: "TOTAL_VIEWS", v: String(project.total_views ?? 0) },
                   ].map(({ k, v }) => (
                     <li
                       key={k}
@@ -874,7 +908,7 @@ export default function ProjectDetailPage() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.25 }}
-                  className="bg-[#0d0a1e]/70 border border-purple-500/12 p-5"
+                  className="bg-[#0d0a1e]/70  border border-slate-800/60 border-purple-500/12 p-5"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
@@ -901,7 +935,7 @@ export default function ProjectDetailPage() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="bg-[#0d0a1e]/70 border border-purple-500/12 p-5"
+                  className="bg-[#0d0a1e]/70 border border-slate-800/60 border-purple-500/12 p-5"
                 >
                   <div className="flex items-center gap-2 mb-4">
                     <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
@@ -946,7 +980,7 @@ export default function ProjectDetailPage() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="bg-[#0d0a1e]/70 border border-purple-500/12 p-5"
+                  className="bg-[#0d0a1e]/70 border border-slate-800/60 border-purple-500/12 p-5"
                 >
                   <div className="flex items-center gap-2 mb-4">
                     <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
@@ -982,7 +1016,7 @@ export default function ProjectDetailPage() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="bg-[#0d0a1e]/70 border border-purple-500/12 p-5"
+                  className="bg-[#0d0a1e]/70 border border-slate-800/60 border-purple-500/12 p-5"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-1.5 h-1.5 bg-slate-600 rounded-full" />
@@ -1013,7 +1047,7 @@ export default function ProjectDetailPage() {
                   href="/projects"
                   className="flex items-center justify-center gap-2 w-full py-3 border border-purple-500/15 text-slate-600 font-mono text-[10px] uppercase tracking-widest hover:border-purple-500/30 hover:text-purple-400 transition-all"
                 >
-                  &lt; ALL_MODULES
+                  &lt; ALL_PROJECTS
                 </Link>
               </motion.div>
             </div>

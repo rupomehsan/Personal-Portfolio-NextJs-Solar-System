@@ -14,14 +14,15 @@ export const API_CONFIG = {
   baseUrl: BASE_URL,
 
   endpoints: {
+     projects: {
+      getAll: `${BASE_URL}/api/get-all-projects`,
+      getOne: `${BASE_URL}/api/get-single-projects`,
+    },
     blogs: {
       getAll: `${BASE_URL}/api/get-all-blogs`,
       getOne: `${BASE_URL}/api/get-blog`,
     },
-    projects: {
-      getAll: `${BASE_URL}/api/get-all-projects`,
-      getOne: `${BASE_URL}/api/get-single-projects`,
-    },
+   
     marketplaces: {
       getAll: `${BASE_URL}/api/get-all-projects`, // Reusing projects endpt for now, or you can specify actual
       getOne: `${BASE_URL}/api/get-project`,         // GET /{slug}

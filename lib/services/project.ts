@@ -1,7 +1,8 @@
 import { API_CONFIG } from "@/config/api";
 
 const CACHE_TTL = 5 * 60 * 1000;
-let _projectsCache: { data: Project[]; at: number } | null = null;
+let _allCache: { data: Project[]; at: number } | null = null;
+let _featuredCache: { data: Project[]; at: number } | null = null;
 
 export interface Project {
   id: number;
@@ -23,6 +24,8 @@ export interface Project {
   is_published: number;
   start_date: string | null;
   end_date: string | null;
+  total_likes?: number;
+  total_views?: number;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -58,9 +61,13 @@ interface ProjectDetailApiResponse {
   data: Project;
 }
 
-export async function getPagedProjects(page: number): Promise<PaginatedProjects> {
+export async function getPagedProjects(
+  page: number,
+  extraParams: Record<string, string> = {}
+): Promise<PaginatedProjects> {
+  const qs = new URLSearchParams({ status: "active", ...extraParams, page: String(page) });
   const res = await fetch(
-    `${API_CONFIG.endpoints.projects.getAll}?page=${page}`,
+    `${API_CONFIG.endpoints.projects.getAll}?${qs}`,
     { ...API_CONFIG.defaultOptions }
   );
   if (!res.ok) throw new Error(`Failed to fetch projects — HTTP ${res.status}`);
@@ -78,23 +85,30 @@ export async function getPagedProjects(page: number): Promise<PaginatedProjects>
   };
 }
 
+async function fetchAllPages(extraParams: Record<string, string> = {}): Promise<Project[]> {
+  const first = await getPagedProjects(1, extraParams);
+  if (first.lastPage <= 1) return first.data;
+  const rest = await Promise.all(
+    Array.from({ length: first.lastPage - 1 }, (_, i) =>
+      getPagedProjects(i + 2, extraParams)
+    )
+  );
+  return [first.data, ...rest.map((r) => r.data)].flat();
+}
+
+/** All active projects — used on /projects page and slug lookups. */
 export async function getAllProjects(): Promise<Project[]> {
-  if (_projectsCache && Date.now() - _projectsCache.at < CACHE_TTL) {
-    return _projectsCache.data;
-  }
-  const first = await getPagedProjects(1);
-  let result: Project[];
-  if (first.lastPage <= 1) {
-    result = first.data;
-  } else {
-    const rest = await Promise.all(
-      Array.from({ length: first.lastPage - 1 }, (_, i) =>
-        getPagedProjects(i + 2)
-      )
-    );
-    result = [first.data, ...rest.map((r) => r.data)].flat();
-  }
-  _projectsCache = { data: result, at: Date.now() };
+  if (_allCache && Date.now() - _allCache.at < CACHE_TTL) return _allCache.data;
+  const result = await fetchAllPages();
+  _allCache = { data: result, at: Date.now() };
+  return result;
+}
+
+/** Featured active projects — used on the home page. */
+export async function getFeaturedProjects(): Promise<Project[]> {
+  if (_featuredCache && Date.now() - _featuredCache.at < CACHE_TTL) return _featuredCache.data;
+  const result = await fetchAllPages({ is_featured: "1" });
+  _featuredCache = { data: result, at: Date.now() };
   return result;
 }
 
