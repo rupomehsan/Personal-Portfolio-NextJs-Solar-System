@@ -1,7 +1,10 @@
 import { API_CONFIG } from "@/config/api";
+import type { Comment } from "./comment";
 
 const CACHE_TTL = 5 * 60 * 1000;
-let _blogsCache: { data: Blog[]; at: number } | null = null;
+
+let _allCache:      { data: Blog[]; at: number } | null = null;
+let _featuredCache: { data: Blog[]; at: number } | null = null;
 
 export interface Blog {
   id: number;
@@ -28,9 +31,11 @@ export interface Blog {
   show_top: string | null;
   writer: number | null;
   creator: number | null;
+  total_likes?: number;
+  total_views?: number;
+  comments?: Comment[];
 }
 
-/** Full pagination metadata returned by the Laravel API */
 export interface PaginatedBlogs {
   data: Blog[];
   currentPage: number;
@@ -61,12 +66,31 @@ interface BlogDetailApiResponse {
   data: Blog;
 }
 
-/** Fetch one page of blogs from the server (server-side pagination). */
+/** Parse the `images` JSON string field into a string array. */
+export function parseImages(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed as string[];
+  } catch { /* fall through */ }
+  return [];
+}
+
+/** Build the full public URL for a stored file path. */
+export function resolveStorageUrl(path: string | null): string {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  // Paths like "uploads/..." live directly under public/, not under /storage/
+  return `${API_CONFIG.baseUrl}/${path}`;
+}
+
+/** Fetch one page of active blogs (server-side pagination). */
 export async function getPagedBlogs(page: number): Promise<PaginatedBlogs> {
-  const res = await fetch(
-    `${API_CONFIG.endpoints.blogs.getAll}?page=${page}`,
-    { ...API_CONFIG.defaultOptions }
-  );
+  const url = new URL(API_CONFIG.endpoints.blogs.getAll);
+  url.searchParams.set("status", "active");
+  url.searchParams.set("page", String(page));
+
+  const res = await fetch(url.toString(), { ...API_CONFIG.defaultOptions });
   if (!res.ok) throw new Error(`Failed to fetch blogs — HTTP ${res.status}`);
 
   const json: BlogListApiResponse = await res.json();
@@ -82,51 +106,85 @@ export async function getPagedBlogs(page: number): Promise<PaginatedBlogs> {
   };
 }
 
-/**
- * Fetch ALL blogs across every page in parallel.
- * Used by the blog-detail page and sidebar population.
- */
+/** Fetch ALL active blogs across every page (used by detail + sidebar). */
 export async function getAllBlogs(): Promise<Blog[]> {
-  if (_blogsCache && Date.now() - _blogsCache.at < CACHE_TTL) {
-    return _blogsCache.data;
-  }
+  if (_allCache && Date.now() - _allCache.at < CACHE_TTL) return _allCache.data;
+
   const first = await getPagedBlogs(1);
   let result: Blog[];
   if (first.lastPage <= 1) {
     result = first.data;
   } else {
     const rest = await Promise.all(
-      Array.from({ length: first.lastPage - 1 }, (_, i) =>
-        getPagedBlogs(i + 2)
-      )
+      Array.from({ length: first.lastPage - 1 }, (_, i) => getPagedBlogs(i + 2))
     );
     result = [first.data, ...rest.map((r) => r.data)].flat();
   }
-  _blogsCache = { data: result, at: Date.now() };
+  _allCache = { data: result, at: Date.now() };
   return result;
 }
 
-/** Try the single-blog endpoint; fall back to getAllBlogs + slug filter. */
-export async function getBlogBySlug(slug: string): Promise<Blog> {
-  try {
-    const res = await fetch(`${API_CONFIG.endpoints.blogs.getOne}/${slug}`, {
-      ...API_CONFIG.defaultOptions,
-    });
-    if (res.ok) {
-      const json: BlogDetailApiResponse = await res.json();
-      if (json?.data) return json.data;
-    }
-  } catch { /* fall through */ }
+/** Fetch only featured active blogs — used on the home page. */
+export async function getFeaturedBlogs(): Promise<Blog[]> {
+  if (_featuredCache && Date.now() - _featuredCache.at < CACHE_TTL) return _featuredCache.data;
 
+  const url = new URL(API_CONFIG.endpoints.blogs.getAll);
+  url.searchParams.set("status", "active");
+  url.searchParams.set("is_featured", "1");
+  url.searchParams.set("page", "1");
+
+  const res = await fetch(url.toString(), { ...API_CONFIG.defaultOptions });
+  if (!res.ok) throw new Error(`Failed to fetch featured blogs — HTTP ${res.status}`);
+
+  const json: BlogListApiResponse = await res.json();
+  const result = json.data?.data ?? [];
+  _featuredCache = { data: result, at: Date.now() };
+  return result;
+}
+
+/** Fetch single blog by slug — returns total_likes and total_views from the API. */
+export async function getBlogBySlug(slug: string): Promise<Blog> {
+  const res = await fetch(`${API_CONFIG.endpoints.blogs.getOne}/${slug}`, {
+    ...API_CONFIG.defaultOptions,
+  });
+  if (res.ok) {
+    const json: BlogDetailApiResponse = await res.json();
+    if (json?.data) return json.data;
+  }
+  // Fallback: find from all-blogs list (no total_likes/views in this path)
   const blogs = await getAllBlogs();
   const found = blogs.find((b) => b.slug === slug);
   if (!found) throw new Error(`Blog "${slug}" not found`);
   return found;
 }
 
-export function extractCategories(
-  blogs: Blog[]
-): { type: string; count: number }[] {
+export interface BlogCategory {
+  id: number;
+  title: string;
+  slug: string | null;
+  icon: string | null;
+  blog_count: number;
+}
+
+interface BlogCategoryApiResponse {
+  data: BlogCategory[];
+}
+
+/** Fetch all active blog categories with their active blog count. */
+export async function getBlogCategories(): Promise<BlogCategory[]> {
+  try {
+    const res = await fetch(API_CONFIG.endpoints.blogs.categories, {
+      ...API_CONFIG.defaultOptions,
+    });
+    if (!res.ok) return [];
+    const json: BlogCategoryApiResponse = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
+export function extractCategories(blogs: Blog[]): { type: string; count: number }[] {
   const map = new Map<string, number>();
   for (const b of blogs) {
     if (b.blog_type) map.set(b.blog_type, (map.get(b.blog_type) ?? 0) + 1);

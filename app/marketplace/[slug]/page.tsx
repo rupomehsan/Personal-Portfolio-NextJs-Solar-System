@@ -525,7 +525,7 @@ export default function MarketplaceDetailPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="mt-10 pt-8 border-t border-slate-800/40"
+                className="mt-10 pt-8 border-t border-slate-800/60"
               >
                 <div className="flex items-center gap-3 mb-4">
                   <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">// TAGS</span>
@@ -953,7 +953,7 @@ export default function MarketplaceDetailPage() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="bg-[#0d0a1e]/70 border border-purple-500/12 p-5"
+                  className="bg-[#0d0a1e]/70 border border-slate-800/60 p-5"
                 >
                   <div className="flex items-center gap-2 mb-4">
                     <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
@@ -985,7 +985,7 @@ export default function MarketplaceDetailPage() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="bg-[#0d0a1e]/70 border border-purple-500/12 p-5"
+                  className="bg-[#0d0a1e]/70 border border-slate-800/60 p-5"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-1.5 h-1.5 bg-slate-600 rounded-full" />

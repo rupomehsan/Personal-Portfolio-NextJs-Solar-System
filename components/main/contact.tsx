@@ -9,7 +9,7 @@ const SOCIALS = [
   { Icon: FaGithub,     link: "https://github.com/rupomehsan",                               label: "GitHub",     color: "hover:text-white hover:border-white/40" },
   { Icon: FaLinkedinIn, link: "https://www.linkedin.com/in/md-abu-ahsan-54515a1b2/",         label: "LinkedIn",   color: "hover:text-[#0A66C2] hover:border-[#0A66C2]/40" },
   { Icon: FaFacebook,   link: "https://www.facebook.com/rupom.ehsan/",                       label: "Facebook",   color: "hover:text-[#1877F2] hover:border-[#1877F2]/40" },
-  { Icon: FaWhatsapp,   link: "https://wa.me/8801682292241",                                  label: "WhatsApp",   color: "hover:text-[#25D366] hover:border-[#25D366]/40" },
+  { Icon: FaWhatsapp,   link: "https://wa.me/8801683392241",                                  label: "WhatsApp",   color: "hover:text-[#25D366] hover:border-[#25D366]/40" },
   { Icon: FaTelegram,   link: "https://web.telegram.org/k/#-2272837972",                     label: "Telegram",   color: "hover:text-[#26A5E4] hover:border-[#26A5E4]/40" },
   { Icon: SiFiverr,     link: "https://www.fiverr.com/rupom_ehsan/",                         label: "Fiverr",     color: "hover:text-[#1DBF73] hover:border-[#1DBF73]/40" },
   { Icon: SiUpwork,     link: "https://www.upwork.com/freelancers/~010e8a7dea092d1282",      label: "Upwork",     color: "hover:text-[#6FDA44] hover:border-[#6FDA44]/40" },
@@ -22,7 +22,7 @@ const EMAILS = [
 ];
 
 const PHONES = [
-  { raw: "8801682292241", display: "+880 1682 292 241" },
+  { raw: "8801682292241", display: "+880 1683 392 241" },
   { raw: "8801931374336", display: "+880 1931 374 336" },
 ];
 
@@ -248,7 +248,7 @@ export const Contact = () => {
             {/* Quick contact hint */}
             <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px] font-mono text-slate-600 border-t border-purple-500/10 pt-3">
               <span className="flex items-center gap-1.5"><FaEnvelope className="w-3 h-3 text-cyan-700" />mdabuahsan96@gmail.com</span>
-              <span className="flex items-center gap-1.5"><FaPhone className="w-3 h-3 text-cyan-700" />+880 1682 292 241</span>
+              <span className="flex items-center gap-1.5"><FaPhone className="w-3 h-3 text-cyan-700" />+880 1683 392 241</span>
             </div>
 
             <button

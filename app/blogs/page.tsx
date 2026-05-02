@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   getPagedBlogs,
   getAllBlogs,
-  extractCategories,
+  getBlogCategories,
   getMostPopular,
   type Blog,
+  type BlogCategory,
   type PaginatedBlogs,
 } from "@/lib/services/blog";
 import { API_CONFIG } from "@/config/api";
@@ -29,7 +31,7 @@ function fmtDate(s: string | null | undefined, short = false) {
 function thumb(p: string | null) {
   if (!p) return DUMMY_IMG;
   if (p.startsWith("http")) return p;
-  return `${API_CONFIG.baseUrl}/storage/${p}`;
+  return `${API_CONFIG.baseUrl}/${p}`;
 }
 
 function buildPageNums(cur: number, last: number): (number | "…")[] {
@@ -55,8 +57,13 @@ function SidebarCard({ children, title, dot }: { children: React.ReactNode; titl
   );
 }
 
-/* ─── page ───────────────────────────────────────────────────────────────── */
-export default function AllBlogsPage() {
+/* ─── inner page (uses useSearchParams — must be inside Suspense) ─────────── */
+function BlogsContent() {
+  const searchParams = useSearchParams();
+  const activeCategoryId = searchParams.get("category_id")
+    ? Number(searchParams.get("category_id"))
+    : null;
+
   /* server-paginated grid data */
   const [result, setResult]         = useState<PaginatedBlogs | null>(null);
   const [page, setPage]             = useState(1);
@@ -64,24 +71,24 @@ export default function AllBlogsPage() {
   const [pageSwitch, setPageSwitch] = useState(false);
   const [gridError, setGridError]   = useState<string | null>(null);
 
-  /* sidebar data (all blogs fetched in background) */
+  /* sidebar data */
   const [allBlogs, setAllBlogs]     = useState<Blog[]>([]);
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [sidebarReady, setSbReady]  = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
 
   /* ── initial load ── */
   useEffect(() => {
-    // Fetch page 1 for grid
     getPagedBlogs(1)
       .then((r) => { setResult(r); })
       .catch((e: Error) => setGridError(e.message))
       .finally(() => setGridLoad(false));
 
-    // Fetch all blogs in background for sidebar
+    getBlogCategories().then(setCategories).catch(() => {});
     getAllBlogs()
       .then((blogs) => { setAllBlogs(blogs); setSbReady(true); })
-      .catch(() => { /* sidebar degrades gracefully */ });
+      .catch(() => {});
   }, []);
 
   /* ── page change ── */
@@ -96,20 +103,35 @@ export default function AllBlogsPage() {
       .finally(() => setPageSwitch(false));
   };
 
-  /* ── sidebar derivations ── */
-  const popular    = useMemo(() => getMostPopular(allBlogs), [allBlogs]);
-  const categories = useMemo(() => extractCategories(allBlogs), [allBlogs]);
+  /* ── derived data ── */
+  const popular = useMemo(() => getMostPopular(allBlogs), [allBlogs]);
+
+  const categoryMap = useMemo(
+    () => new Map(categories.map((c) => [c.id, c.title])),
+    [categories],
+  );
+
+  const activeCategoryName = useMemo(
+    () => categories.find((c) => c.id === activeCategoryId)?.title ?? null,
+    [activeCategoryId, categories],
+  );
+
+  const categoryResults = useMemo(() => {
+    if (activeCategoryId === null) return null;
+    return allBlogs.filter((b) => b.blog_category_id === activeCategoryId);
+  }, [activeCategoryId, allBlogs]);
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return null;
-    return allBlogs.filter((b) =>
+    const pool = categoryResults ?? allBlogs;
+    return pool.filter((b) =>
       (b.title ?? "").toLowerCase().includes(q) ||
       (b.description ?? "").toLowerCase().includes(q) ||
       (b.blog_type ?? "").toLowerCase().includes(q) ||
       (b.tags ?? "").toLowerCase().includes(q)
     );
-  }, [searchQuery, allBlogs]);
+  }, [searchQuery, allBlogs, categoryResults]);
 
   /* ── loading skeleton ── */
   if (gridLoading) return (
@@ -144,6 +166,9 @@ export default function AllBlogsPage() {
   );
 
   const blogs = result?.data ?? [];
+  /* what the grid actually renders */
+  const displayBlogs = searchResults ?? categoryResults ?? blogs;
+  const isFiltered = categoryResults !== null || searchResults !== null;
 
   return (
     <main className="min-h-screen bg-[#030014] relative overflow-x-hidden">
@@ -159,8 +184,17 @@ export default function AllBlogsPage() {
           <Link href="/" className="hover:text-cyan-400 transition-colors">root@sys:~</Link>
           <span className="text-slate-800">/</span>
           <span className="text-cyan-400">blogs</span>
-          {result && (
+          {activeCategoryName && (
+            <>
+              <span className="text-slate-800">/</span>
+              <span className="text-green-400">{activeCategoryName}</span>
+            </>
+          )}
+          {result && !activeCategoryId && (
             <span className="text-slate-700 ml-2">[{result.total}_TOTAL]</span>
+          )}
+          {categoryResults && (
+            <span className="text-slate-700 ml-2">[{categoryResults.length}_ENTRIES]</span>
           )}
         </div>
 
@@ -178,6 +212,28 @@ export default function AllBlogsPage() {
           </h1>
         </motion.div>
 
+        {/* ── Active category banner ── */}
+        {activeCategoryName && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 flex items-center gap-3 px-4 py-2.5 bg-green-500/8 border border-green-500/25"
+          >
+            <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shrink-0" />
+            <span className="font-mono text-[10px] text-slate-500 uppercase tracking-widest">CATEGORY:</span>
+            <span className="font-mono text-sm text-green-300 font-bold">{activeCategoryName}</span>
+            {!sidebarReady && categoryResults === null && (
+              <span className="font-mono text-[9px] text-slate-600 animate-pulse ml-1">loading…</span>
+            )}
+            <Link
+              href="/blogs"
+              className="ml-auto font-mono text-[10px] text-slate-600 hover:text-orange-400 transition-colors flex items-center gap-1"
+            >
+              [×] CLEAR_FILTER
+            </Link>
+          </motion.div>
+        )}
+
         {/* ── Search ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
           <div className="relative w-100">
@@ -186,7 +242,7 @@ export default function AllBlogsPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="SEARCH_BLOGS..."
+              placeholder={activeCategoryName ? `SEARCH_IN_${activeCategoryName.toUpperCase()}...` : "SEARCH_BLOGS..."}
               className="w-full bg-[#0b1426]/80 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400/60 focus:outline-none text-slate-200 font-mono text-sm placeholder:text-slate-700 py-3 pl-10 pr-4 transition-colors"
             />
             {searchQuery && (
@@ -202,36 +258,55 @@ export default function AllBlogsPage() {
             <p className="font-mono text-[11px] text-slate-600 mt-2">
               <span className="text-cyan-400">{searchResults.length}</span> result{searchResults.length !== 1 ? "s" : ""} for{" "}
               <span className="text-slate-400">&quot;{searchQuery}&quot;</span>
+              {activeCategoryName && <span className="text-slate-600"> in {activeCategoryName}</span>}
             </p>
           )}
         </motion.div>
 
-        {/* ── Two-column layout (no items-start → enables sticky sidebar) ── */}
+        {/* ── Two-column layout ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* ════ LEFT: grid + pagination ════ */}
           <div className="lg:col-span-9">
 
-            {/* Stats row */}
-           
-
             {/* Grid */}
             <AnimatePresence mode="wait">
               <motion.div
-                key={searchResults ? `search-${searchQuery}` : page}
+                key={searchResults ? `search-${searchQuery}` : activeCategoryId ?? page}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: pageSwitch ? 0.4 : 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8"
               >
-                {searchResults !== null && searchResults.length === 0 && (
+                {/* Loading category results */}
+                {activeCategoryId !== null && !sidebarReady && (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-64 bg-slate-800/30 animate-pulse border border-slate-700/10" style={{ animationDelay: `${i * 80}ms` }} />
+                  ))
+                )}
+
+                {/* Empty state */}
+                {sidebarReady && displayBlogs.length === 0 && (
                   <div className="col-span-full text-center py-20 font-mono">
                     <div className="text-5xl text-slate-800/60 mb-4">[ NULL ]</div>
-                    <p className="text-slate-600 text-xs tracking-widest">NO_LOGS_FOUND for &quot;{searchQuery}&quot;</p>
+                    <p className="text-slate-600 text-xs tracking-widest">
+                      {searchResults !== null
+                        ? `NO_LOGS_FOUND for "${searchQuery}"`
+                        : activeCategoryName
+                          ? `NO_LOGS_IN_CATEGORY "${activeCategoryName}"`
+                          : "NO_LOGS_FOUND"}
+                    </p>
+                    {activeCategoryId && (
+                      <Link href="/blogs" className="inline-block mt-4 font-mono text-[10px] text-cyan-600 hover:text-cyan-400 transition-colors">
+                        [←] VIEW_ALL_BLOGS
+                      </Link>
+                    )}
                   </div>
                 )}
-                {(searchResults ?? blogs).map((blog, i) => (
+
+                {/* Blog cards */}
+                {(activeCategoryId === null || sidebarReady) && displayBlogs.map((blog, i) => (
                   <Link key={blog.id} href={blog.slug ? `/blogs/${blog.slug}` : "#"} className="block group">
                     <motion.div
                       initial={{ opacity: 0, y: 14 }}
@@ -258,9 +333,9 @@ export default function AllBlogsPage() {
                             ★ FEATURED
                           </span>
                         )}
-                        {blog.blog_type && (
+                        {categoryMap.get(blog.blog_category_id) && (
                           <span className="absolute bottom-2.5 left-2.5 z-20 px-2 py-0.5 bg-black/75 border border-cyan-500/20 text-cyan-400 font-mono text-[9px] uppercase tracking-wider">
-                            {blog.blog_type.substring(0, 22)}
+                            {categoryMap.get(blog.blog_category_id)!.substring(0, 22)}
                           </span>
                         )}
                       </div>
@@ -298,15 +373,14 @@ export default function AllBlogsPage() {
               </motion.div>
             </AnimatePresence>
 
-            {/* ── Pagination — hidden when searching ── */}
-            {!searchResults && result && result.lastPage > 1 && (
+            {/* ── Pagination — only when showing unpaginated grid ── */}
+            {!isFiltered && result && result.lastPage > 1 && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
                 className="flex items-center justify-center gap-1.5 flex-wrap"
               >
-                {/* Prev */}
                 <button
                   onClick={() => goToPage(page - 1)}
                   disabled={page === 1 || pageSwitch}
@@ -316,7 +390,6 @@ export default function AllBlogsPage() {
                   PREV
                 </button>
 
-                {/* Page numbers */}
                 {buildPageNums(page, result.lastPage).map((n, i) =>
                   n === "…" ? (
                     <span key={`d${i}`} className="font-mono text-slate-700 px-1 text-xs select-none">…</span>
@@ -336,7 +409,6 @@ export default function AllBlogsPage() {
                   )
                 )}
 
-                {/* Next */}
                 <button
                   onClick={() => goToPage(page + 1)}
                   disabled={page === result.lastPage || pageSwitch}
@@ -348,8 +420,7 @@ export default function AllBlogsPage() {
               </motion.div>
             )}
 
-            {/* Page jump info */}
-            {!searchResults && result && result.lastPage > 1 && (
+            {!isFiltered && result && result.lastPage > 1 && (
               <p className="text-center font-mono text-[10px] text-slate-700 mt-3">
                 Page {result.currentPage} of {result.lastPage} · {result.total} total entries
               </p>
@@ -366,10 +437,10 @@ export default function AllBlogsPage() {
                   <SidebarCard title="ARCHIVE_STATS" dot="bg-cyan-400 animate-pulse">
                     <div className="grid grid-cols-2 gap-2.5">
                       {[
-                        { l: "TOTAL",      v: result.total },
-                        { l: "PER_PAGE",   v: result.perPage },
-                        { l: "PAGES",      v: result.lastPage },
-                        { l: "CATEGORIES", v: sidebarReady ? categories.length : "—" },
+                        { l: "TOTAL",      v: activeCategoryId ? (categoryResults?.length ?? "…") : result.total },
+                        { l: "PER_PAGE",   v: activeCategoryId ? "—" : result.perPage },
+                        { l: "PAGES",      v: activeCategoryId ? "—" : result.lastPage },
+                        { l: "CATEGORIES", v: categories.length > 0 ? categories.length : "—" },
                       ].map((s) => (
                         <div key={s.l} className="bg-black/25 border border-slate-800/60 p-2.5">
                           <div className="font-mono text-[8px] text-slate-700 uppercase tracking-widest mb-1">{s.l}</div>
@@ -432,7 +503,7 @@ export default function AllBlogsPage() {
               {/* Categories */}
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
                 <SidebarCard title="CATEGORIES" dot="bg-green-400">
-                  {!sidebarReady ? (
+                  {categories.length === 0 ? (
                     <div className="space-y-2">
                       {Array.from({ length: 6 }).map((_, i) => (
                         <div key={i} className="h-8 bg-slate-800/40 animate-pulse rounded-sm" style={{ animationDelay: `${i * 50}ms` }} />
@@ -440,21 +511,34 @@ export default function AllBlogsPage() {
                     </div>
                   ) : (
                     <div className="space-y-0.5 max-h-[300px] overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-                      {categories.map(({ type, count }) => (
-                        <Link
-                          key={type}
-                          href={`/blogs?type=${encodeURIComponent(type)}`}
-                          className="flex items-center justify-between px-3 py-2 border border-transparent hover:border-cyan-500/20 hover:bg-cyan-500/5 transition-all group"
-                        >
-                          <span className="font-mono text-[11px] text-slate-500 group-hover:text-slate-200 transition-colors truncate flex items-center gap-2 min-w-0">
-                            <span className="text-cyan-800 shrink-0">&gt;</span>
-                            <span className="truncate">{type.substring(0, 26)}</span>
-                          </span>
-                          <span className="font-mono text-[10px] px-1.5 py-0.5 bg-slate-800/80 text-slate-600 group-hover:bg-cyan-500/10 group-hover:text-cyan-500 transition-all shrink-0 ml-2">
-                            {count}
-                          </span>
-                        </Link>
-                      ))}
+                      {categories.map((cat) => {
+                        const isActive = cat.id === activeCategoryId;
+                        return (
+                          <Link
+                            key={cat.id}
+                            href={isActive ? "/blogs" : `/blogs?category_id=${cat.id}`}
+                            className={`flex items-center justify-between px-3 py-2 border transition-all group ${
+                              isActive
+                                ? "border-green-500/40 bg-green-500/8 text-green-300"
+                                : "border-transparent hover:border-cyan-500/20 hover:bg-cyan-500/5"
+                            }`}
+                          >
+                            <span className={`font-mono text-[11px] truncate flex items-center gap-2 min-w-0 transition-colors ${
+                              isActive ? "text-green-300" : "text-slate-500 group-hover:text-slate-200"
+                            }`}>
+                              <span className={isActive ? "text-green-500 shrink-0" : "text-cyan-800 shrink-0"}>&gt;</span>
+                              <span className="truncate">{cat.title.substring(0, 26)}</span>
+                            </span>
+                            <span className={`font-mono text-[10px] px-1.5 py-0.5 shrink-0 ml-2 transition-all ${
+                              isActive
+                                ? "bg-green-500/20 text-green-400"
+                                : "bg-slate-800/80 text-slate-600 group-hover:bg-cyan-500/10 group-hover:text-cyan-500"
+                            }`}>
+                              {cat.blog_count}
+                            </span>
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </SidebarCard>
@@ -478,5 +562,32 @@ export default function AllBlogsPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+/* ─── page export (Suspense required by useSearchParams) ─────────────────── */
+export default function AllBlogsPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-[#030014]">
+        <div className="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-10 pt-28 pb-20">
+          <div className="h-12 w-56 bg-slate-800/50 animate-pulse mb-10 rounded-sm" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-9 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-64 bg-slate-800/30 animate-pulse border border-slate-700/10" />
+              ))}
+            </div>
+            <div className="lg:col-span-3 space-y-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-16 bg-slate-800/30 animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+    }>
+      <BlogsContent />
+    </Suspense>
   );
 }

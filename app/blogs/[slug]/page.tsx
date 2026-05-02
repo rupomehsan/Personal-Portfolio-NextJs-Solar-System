@@ -6,11 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
   getAllBlogs,
-  extractCategories,
+  getBlogBySlug,
+  getBlogCategories,
+  resolveStorageUrl,
   type Blog,
+  type BlogCategory,
 } from "@/lib/services/blog";
 import {
-  getComments,
   postComment,
   type Comment,
   type CommentInput,
@@ -30,9 +32,18 @@ function fmtDate(s: string, short = false) {
 }
 
 function thumb(p: string | null) {
-  if (!p) return DUMMY_IMG;
-  if (p.startsWith("http")) return p;
-  return `${API_CONFIG.baseUrl}/storage/${p}`;
+  const url = resolveStorageUrl(p);
+  return url || DUMMY_IMG;
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function parseImages(raw: string[] | string | null): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  try { return JSON.parse(raw) as string[]; } catch { return []; }
 }
 
 function parseTags(raw: string | null): string[] {
@@ -51,15 +62,16 @@ function toHTML(content: string): string {
 }
 
 /* ─── comment avatar ─────────────────────────────────────────────────────── */
-function Avatar({ name }: { name: string }) {
+function Avatar({ name }: { name: string | null | undefined }) {
   const colors = ["#0e7490", "#b45309", "#065f46", "#7c3aed", "#be123c"];
-  const color  = colors[name.charCodeAt(0) % colors.length];
+  const displayName = (name || "U").trim();
+  const color  = colors[displayName.charCodeAt(0) % colors.length];
   return (
     <div
       className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-sm text-white shrink-0"
       style={{ background: color }}
     >
-      {name.charAt(0).toUpperCase()}
+      {displayName.charAt(0).toUpperCase()}
     </div>
   );
 }
@@ -96,11 +108,11 @@ function CommentItem({
 
   return (
     <div className="flex gap-3">
-      <Avatar name={comment.name} />
+      <Avatar name={comment.user?.name ?? comment.name} />
       <div className="flex-1 min-w-0">
         <div className="bg-[#0d1a2d]/80 border border-cyan-500/10 p-4">
           <div className="flex items-baseline gap-3 mb-2 flex-wrap">
-            <span className="font-mono font-bold text-sm text-white">{comment.name}</span>
+            <span className="font-mono font-bold text-sm text-white">{comment.user?.name ?? comment.name}</span>
             <span className="font-mono text-[10px] text-slate-600">{fmtDate(comment.created_at)}</span>
             {ok && <span className="font-mono text-[9px] text-green-500 tracking-widest">✓ REPLY_SENT</span>}
           </div>
@@ -113,7 +125,6 @@ function CommentItem({
           </button>
         </div>
 
-        {/* Inline reply form */}
         <AnimatePresence>
           {open && (
             <motion.form
@@ -143,21 +154,47 @@ function CommentItem({
           )}
         </AnimatePresence>
 
-        {/* Nested replies */}
         {(comment.replies ?? []).length > 0 && (
           <div className="mt-2 ml-4 pl-4 border-l border-cyan-500/10 space-y-2">
-            {comment.replies!.map((r) => (
-              <div key={r.id} className="flex gap-2.5">
-                <Avatar name={r.name} />
-                <div className="flex-1 bg-[#0d1a2d]/60 border border-slate-800/50 p-3">
-                  <div className="flex items-baseline gap-3 mb-1.5 flex-wrap">
-                    <span className="font-mono font-bold text-xs text-slate-200">{r.name}</span>
-                    <span className="font-mono text-[9px] text-slate-700">{fmtDate(r.created_at)}</span>
+            {comment.replies!.map((r) => {
+              const isAdmin = !!r.user_id;
+              return (
+                <div key={r.id} className="flex gap-2.5">
+                  {isAdmin ? (
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-cyan-500/30 to-orange-500/20 border border-cyan-400/50 shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                      <svg className="w-4 h-4 text-cyan-300" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <Avatar name={r.name} />
+                  )}
+                  <div className={`flex-1 p-3 ${isAdmin
+                    ? "bg-cyan-950/30 border border-cyan-500/25 shadow-[0_0_12px_rgba(6,182,212,0.07)]"
+                    : "bg-[#0d1a2d]/60 border border-slate-800/50"
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      {isAdmin ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-cyan-500/15 border border-cyan-400/40 font-mono font-black text-[10px] text-cyan-300 tracking-[0.15em] uppercase">
+                          <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse shrink-0" />
+                          ADMIN
+                          <span className="text-orange-400">_</span>
+                          <svg className="w-2.5 h-2.5 text-cyan-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                          </svg>
+                        </span>
+                      ) : (
+                        <span className="font-mono font-bold text-xs text-slate-200">{r.name}</span>
+                      )}
+                      <span className="font-mono text-[9px] text-slate-700">{fmtDate(r.created_at)}</span>
+                    </div>
+                    <p className={`font-mono text-[11px] leading-relaxed ${isAdmin ? "text-cyan-100/70" : "text-slate-500"}`}>
+                      {r.comment}
+                    </p>
                   </div>
-                  <p className="font-mono text-slate-500 text-[11px] leading-relaxed">{r.comment}</p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -166,18 +203,13 @@ function CommentItem({
 }
 
 /* ─── comments section ───────────────────────────────────────────────────── */
-function CommentsSection({ blogId }: { blogId: number }) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading]   = useState(true);
+function CommentsSection({ blogId, initialComments = [] }: { blogId: number; initialComments?: Comment[] }) {
+  const [comments, setComments] = useState<Comment[]>(initialComments);
   const [form, setForm]         = useState({ name: "", email: "", comment: "" });
   const [busy, setBusy]         = useState(false);
   const [err, setErr]           = useState("");
   const [ok, setOk]             = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    getComments(blogId).then(setComments).finally(() => setLoading(false));
-  }, [blogId]);
 
   function addReply(parentId: number, reply: Comment) {
     setComments((prev) =>
@@ -204,43 +236,27 @@ function CommentsSection({ blogId }: { blogId: number }) {
 
   return (
     <div className="mt-14 pt-10 border-t border-slate-800/60">
-      {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
         <h2 className="font-mono font-bold text-white text-lg uppercase tracking-widest">
           COMMENTS
-          {!loading && (
-            <span className="ml-3 text-slate-600 text-sm">[ {comments.length} ]</span>
-          )}
+          <span className="ml-3 text-slate-600 text-sm">[ {comments.length} ]</span>
         </h2>
         <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/20 to-transparent" />
       </div>
 
-      {/* Loading */}
-      {loading && (
-        <div className="flex items-center gap-3 font-mono text-[11px] text-slate-600 py-6">
-          <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
-            className="inline-block w-3 h-3 border border-t-cyan-500 border-cyan-500/20 rounded-full" />
-          LOADING_COMMENTS...
-        </div>
-      )}
+      <div className="space-y-5 mb-12">
+        {comments.length === 0 ? (
+          <div className="py-10 text-center font-mono text-slate-700 border border-slate-800/40 text-xs tracking-widest">
+            NO_COMMENTS_YET — BE_THE_FIRST
+          </div>
+        ) : (
+          comments.map((c) => (
+            <CommentItem key={c.id} comment={c} blogId={blogId} onReplyPosted={addReply} />
+          ))
+        )}
+      </div>
 
-      {/* Comment list */}
-      {!loading && (
-        <div className="space-y-5 mb-12">
-          {comments.length === 0 ? (
-            <div className="py-10 text-center font-mono text-slate-700 border border-slate-800/40 text-xs tracking-widest">
-              NO_COMMENTS_YET — BE_THE_FIRST
-            </div>
-          ) : (
-            comments.map((c) => (
-              <CommentItem key={c.id} comment={c} blogId={blogId} onReplyPosted={addReply} />
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Add comment form */}
       <div className="bg-[#0b1426]/60 border border-cyan-500/10 p-6">
         <div className="flex items-center gap-2 mb-5">
           <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
@@ -293,25 +309,36 @@ export default function BlogDetailPage() {
 
   const [blog, setBlog]               = useState<Blog | null>(null);
   const [recent, setRecent]           = useState<Blog[]>([]);
-  const [categories, setCategories]   = useState<{ type: string; count: number }[]>([]);
+  const [categories, setCategories]   = useState<BlogCategory[]>([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState<string | null>(null);
   const [readProgress, setProgress]   = useState(0);
+  const [liked, setLiked]             = useState(false);
+  const [liking, setLiking]           = useState(false);
+  const [likeCount, setLikeCount]     = useState(0);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
-  // Fetch all blogs once → derive blog + recent + categories
   useEffect(() => {
-    getAllBlogs()
-      .then((all) => {
-        const found = all.find((b) => b.slug === slug);
-        if (!found) throw new Error(`Log "${slug}" not found`);
+    // Fetch the blog directly by slug — includes total_likes & total_views
+    getBlogBySlug(slug)
+      .then((found) => {
         setBlog(found);
-        setCategories(extractCategories(all));
-        setRecent(
-          all
-            .filter((b) => b.slug !== slug)
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .slice(0, 5)
-        );
+        setLikeCount(found.total_likes ?? 0);
+        const stored = JSON.parse(localStorage.getItem("liked_blogs") || "[]") as number[];
+        setLiked(stored.includes(found.id));
+
+        // Load sidebar data independently (non-blocking)
+        getBlogCategories().then(setCategories).catch(() => {});
+        getAllBlogs()
+          .then((all) => {
+            setRecent(
+              all
+                .filter((b) => b.slug !== slug)
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, 5)
+            );
+          })
+          .catch(() => { /* sidebar degrades silently */ });
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -327,7 +354,34 @@ export default function BlogDetailPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const tags = parseTags(blog?.tags ?? null);
+  useEffect(() => {
+    if (lightboxIdx === null) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setLightboxIdx(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxIdx]);
+
+  async function handleLike() {
+    if (!blog || liking || liked) return;
+    setLiking(true);
+    try {
+      const res = await fetch(`${API_CONFIG.endpoints.blogs.like}/${blog.id}`, {
+        method: "POST",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+      });
+      if (res.status === 201 || res.status === 429) {
+        setLiked(true);
+        if (res.status === 201) setLikeCount((c) => c + 1);
+        const stored = JSON.parse(localStorage.getItem("liked_blogs") || "[]") as number[];
+        localStorage.setItem("liked_blogs", JSON.stringify([...new Set([...stored, blog.id])]));
+      }
+    } catch { /* silent */ } finally {
+      setLiking(false);
+    }
+  }
+
+  const tags    = parseTags(blog?.tags ?? null);
+  const gallery = parseImages(blog?.images ?? null).map((p) => resolveStorageUrl(p) || DUMMY_IMG);
 
   /* ── Loading ── */
   if (loading) return (
@@ -360,16 +414,52 @@ export default function BlogDetailPage() {
   return (
     <main className="min-h-screen bg-[#030014] relative overflow-x-hidden">
 
+      {/* Lightbox */}
+      {lightboxIdx !== null && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4"
+          onClick={() => setLightboxIdx(null)}
+        >
+          <button
+            className="absolute top-4 right-5 font-mono text-slate-400 hover:text-white text-xl transition-colors z-10"
+            onClick={() => setLightboxIdx(null)}
+          >
+            ✕
+          </button>
+          <button
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center border border-slate-700 text-slate-400 hover:text-white hover:border-cyan-400 transition-all font-mono z-10"
+            onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx - 1 + gallery.length) % gallery.length); }}
+          >
+            ‹
+          </button>
+          <img
+            src={gallery[lightboxIdx]}
+            alt={`Gallery ${lightboxIdx + 1}`}
+            className="max-w-full max-h-[85vh] object-contain border border-cyan-500/20"
+            onClick={(e) => e.stopPropagation()}
+            onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
+          />
+          <button
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center border border-slate-700 text-slate-400 hover:text-white hover:border-cyan-400 transition-all font-mono z-10"
+            onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx + 1) % gallery.length); }}
+          >
+            ›
+          </button>
+          <span className="absolute bottom-4 font-mono text-[10px] text-slate-600">
+            {lightboxIdx + 1} / {gallery.length}
+          </span>
+        </div>
+      )}
+
       {/* Reading progress */}
       <div className="fixed top-0 left-0 right-0 z-[60] h-[2px] bg-slate-900/80">
         <div className="h-full bg-gradient-to-r from-cyan-500 via-cyan-400 to-orange-400 transition-all duration-100" style={{ width: `${readProgress}%` }} />
       </div>
 
-      {/* Background glows */}
       <div className="fixed top-0 left-1/3 w-[700px] h-[500px] bg-cyan-500/[0.025] rounded-full blur-[180px] pointer-events-none" />
       <div className="fixed bottom-0 right-1/4 w-[600px] h-[500px] bg-orange-500/[0.025] rounded-full blur-[180px] pointer-events-none" />
 
-      {/* ── Hero image ── */}
+      {/* ── Hero thumbnail ── */}
       <div className="relative w-full h-[38vh] sm:h-[48vh] overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-[#030014] z-10" />
         <div className="absolute inset-0 bg-cyan-900/15 mix-blend-color z-[5]" />
@@ -377,17 +467,7 @@ export default function BlogDetailPage() {
           className="w-full h-full object-cover"
           onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }} />
 
-        {/* Breadcrumb inside hero */}
-        <div className="absolute top-24 left-0 right-0 z-20 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10">
-          <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2 font-mono text-[11px] text-slate-400">
-            <Link href="/" className="hover:text-cyan-400 transition-colors">root@sys:~</Link>
-            <span className="text-slate-700">/</span>
-            <Link href="/blogs" className="hover:text-cyan-400 transition-colors">blogs</Link>
-            <span className="text-slate-700">/</span>
-            <span className="text-cyan-400 truncate max-w-[200px] sm:max-w-none">{blog.slug}</span>
-          </motion.div>
-        </div>
+       
       </div>
 
       {/* ── Main wrapper ── */}
@@ -399,11 +479,10 @@ export default function BlogDetailPage() {
 
             {/* Title block */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-              {/* Badges */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {blog.blog_type && (
+                {categories.find((c) => c.id === blog.blog_category_id) && (
                   <span className="px-3 py-1 bg-cyan-950/60 border border-cyan-500/25 text-cyan-300 font-mono text-[9px] uppercase tracking-widest">
-                    [{blog.blog_type.substring(0, 30)}]
+                    [{categories.find((c) => c.id === blog.blog_category_id)!.title.substring(0, 30)}]
                   </span>
                 )}
                 {blog.is_featured === 1 && (
@@ -418,8 +497,8 @@ export default function BlogDetailPage() {
                 {blog.title}
               </h1>
 
-              {/* Meta */}
-              <div className="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs text-slate-600 pb-5 border-b border-slate-800/60">
+              {/* Meta row */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-xs text-slate-600 pb-5 border-b border-slate-800/60">
                 <span className="flex items-center gap-1.5">
                   <svg className="w-3 h-3 text-cyan-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                   {fmtDate(blog.publish_date || blog.created_at)}
@@ -430,28 +509,71 @@ export default function BlogDetailPage() {
                     {blog.reading_time} min read
                   </span>
                 )}
-                <span className="flex items-center gap-1.5 font-mono text-[11px]">
-                  <span className="text-slate-700">#</span>
-                  <span className="text-slate-700">ID:{blog.id}</span>
+                <span className="flex items-center gap-1.5 text-[11px]">
+                  <span className="text-slate-700">#ID:{blog.id}</span>
                 </span>
+                {/* Like button */}
+                <button
+                  onClick={handleLike}
+                  disabled={liking || liked}
+                  className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 border font-mono text-[10px] uppercase tracking-widest transition-all disabled:cursor-not-allowed ${
+                    liked
+                      ? "bg-rose-500/20 border-rose-500/60 text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.25)]"
+                      : "bg-slate-900/40 border-slate-700/50 text-slate-500 hover:border-rose-500/40 hover:text-rose-400"
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill={liked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  {liking ? "..." : liked ? "LIKED" : "LIKE"}
+                  {likeCount > 0 && <span className="opacity-60">[{likeCount}]</span>}
+                </button>
               </div>
             </motion.div>
 
-            {/* Description lead */}
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
-              className="font-mono text-slate-300 text-sm sm:text-[15px] leading-relaxed border-l-2 border-cyan-500/35 pl-5 mb-10 italic">
-              {blog.description}
-            </motion.p>
-
-            {/* Content */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-              <div className="flex items-center gap-3 mb-6">
-                <span className="font-mono text-[9px] text-slate-700 uppercase tracking-[0.2em]">// CONTENT</span>
-                <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/20 to-transparent" />
-              </div>
-              <div className="blog-content font-mono text-slate-400 text-[13px] leading-[1.95]"
-                dangerouslySetInnerHTML={{ __html: toHTML(blog.content) }} />
+            {/* Description + vertical image strip */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15 }}
+              className="flex gap-0 mb-10"
+            >
+              {/* Left: vertical image strip */}
+              {gallery.length > 0 && (
+                <div className="flex flex-col gap-2 w-[80px] sm:w-[96px] shrink-0 pr-4 border-r border-cyan-500/25 mr-5">
+                  <span className="font-mono text-[8px] text-slate-700 uppercase tracking-widest mb-1">
+                    {gallery.length} IMG
+                  </span>
+                  {gallery.map((src, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setLightboxIdx(i)}
+                      className="w-full aspect-video overflow-hidden border border-cyan-500/20 hover:border-cyan-400/60 transition-colors group relative"
+                    >
+                      <img
+                        src={src}
+                        alt={`Screenshot ${i + 1}`}
+                        className="w-full h-full object-cover opacity-75 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
+                        onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {/* Right: description */}
+              {blog.description && (
+                <p className="flex-1 font-mono text-slate-300 text-sm sm:text-[15px] leading-relaxed italic">
+                  {stripHtml(blog.description)}
+                </p>
+              )}
             </motion.div>
+
+           
 
             {/* Tags */}
             {tags.length > 0 && (
@@ -484,10 +606,10 @@ export default function BlogDetailPage() {
             )}
 
             {/* Comments */}
-            <CommentsSection blogId={blog.id} />
+            <CommentsSection blogId={blog.id} initialComments={blog.comments ?? []} />
 
             {/* Bottom nav */}
-            <div className="mt-10 pt-6 border-t border-slate-800/40 flex items-center justify-between">
+            <div className="my-10 pt-6 border-t border-slate-800/40 flex items-center justify-between">
               <Link href="/blogs">
                 <button className="group flex items-center gap-2 font-mono text-xs text-slate-600 hover:text-cyan-400 transition-colors uppercase tracking-widest">
                   <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -502,19 +624,18 @@ export default function BlogDetailPage() {
           <aside className="lg:col-span-4">
             <div className="lg:sticky lg:top-24 space-y-5">
 
-              {/* Blog meta */}
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-                className="bg-[#0b1426]/70 border border-cyan-500/12 p-5">
+                className="bg-[#0b1426]/70 border border-slate-800/60 p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
                   <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">LOG_METADATA</span>
                 </div>
                 <ul className="space-y-3">
                   {[
-                    { k: "PUBLISHED", v: fmtDate(blog.publish_date || blog.created_at) },
-                    { k: "UPDATED",   v: fmtDate(blog.updated_at) },
-                    { k: "STATUS",    v: blog.status.toUpperCase() },
-                    { k: "LOG_ID",    v: `#${blog.id}` },
+                    { k: "PUBLISHED",   v: fmtDate(blog.publish_date || blog.created_at) },
+                    { k: "UPDATED",     v: fmtDate(blog.updated_at) },
+                    { k: "TOTAL_LIKES", v: String(likeCount) },
+                    { k: "TOTAL_VIEWS", v: String(blog.total_views ?? 0) },
                     (blog.reading_time ?? 0) > 0 && (blog.reading_time ?? 0) <= 300
                       ? { k: "READ_TIME", v: `${blog.reading_time} min` }
                       : null,
@@ -527,10 +648,9 @@ export default function BlogDetailPage() {
                 </ul>
               </motion.div>
 
-              {/* Recent blogs */}
               {recent.length > 0 && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
-                  className="bg-[#0b1426]/70 border border-cyan-500/12 p-5">
+                  className="bg-[#0b1426]/70 border border-slate-800/60 p-5">
                   <div className="flex items-center gap-2 mb-4">
                     <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
                     <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">RECENT_LOGS</span>
@@ -555,24 +675,23 @@ export default function BlogDetailPage() {
                 </motion.div>
               )}
 
-              {/* Categories */}
               {categories.length > 0 && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
-                  className="bg-[#0b1426]/70 border border-cyan-500/12 p-5">
+                  className="bg-[#0b1426]/70 border border-slate-800/60 p-5">
                   <div className="flex items-center gap-2 mb-4">
                     <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
                     <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">CATEGORIES</span>
                   </div>
                   <div className="space-y-0.5 max-h-[260px] overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-                    {categories.map(({ type, count }) => (
-                      <Link key={type} href={`/blogs?type=${encodeURIComponent(type)}`}
+                    {categories.map((cat) => (
+                      <Link key={cat.id} href={`/blogs?category_id=${cat.id}`}
                         className="flex items-center justify-between px-3 py-2 border border-transparent hover:border-cyan-500/20 hover:bg-cyan-500/5 transition-all group">
                         <span className="font-mono text-[11px] text-slate-500 group-hover:text-slate-200 transition-colors truncate flex items-center gap-2 min-w-0">
                           <span className="text-cyan-800 shrink-0">&gt;</span>
-                          <span className="truncate">{type.substring(0, 26)}</span>
+                          <span className="truncate">{cat.title.substring(0, 26)}</span>
                         </span>
                         <span className="font-mono text-[10px] px-1.5 py-0.5 bg-slate-800/80 text-slate-600 group-hover:bg-cyan-500/10 group-hover:text-cyan-500 transition-all shrink-0 ml-2">
-                          {count}
+                          {cat.blog_count}
                         </span>
                       </Link>
                     ))}
@@ -580,10 +699,9 @@ export default function BlogDetailPage() {
                 </motion.div>
               )}
 
-              {/* Tags (sidebar) */}
               {tags.length > 0 && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}
-                  className="bg-[#0b1426]/70 border border-cyan-500/12 p-5">
+                  className="bg-[#0b1426]/70 border border-slate-800/60 p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-1.5 h-1.5 bg-slate-600 rounded-full" />
                     <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">TAGS</span>
@@ -597,6 +715,18 @@ export default function BlogDetailPage() {
                   </div>
                 </motion.div>
               )}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.55 }}
+              >
+                <Link
+                  href="/blogs"
+                  className="flex items-center justify-center gap-2 w-full py-3 border border-purple-500/15 text-slate-600 font-mono text-[10px] uppercase tracking-widest hover:border-purple-500/30 hover:text-purple-400 transition-all"
+                >
+                  &lt; ALL_BLOGS
+                </Link>
+              </motion.div>
             </div>
           </aside>
         </div>

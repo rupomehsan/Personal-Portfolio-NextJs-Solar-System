@@ -1,9 +1,16 @@
 import { API_CONFIG } from "@/config/api";
 
+export interface User {
+  id: number;
+  name: string;
+}
+
 export interface Comment {
   id: number;
   blog_id: number;
   parent_id: number | null;
+  user_id?: number | null;
+  user?: User | null;
   name: string;
   email: string | null;
   comment: string;

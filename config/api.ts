@@ -28,12 +28,14 @@ export const API_CONFIG = {
     },
 
     blogs: {
-      getAll: `${BASE_URL}/api/get-all-blogs`,
-      getOne: `${BASE_URL}/api/get-blog`,
+      getAll:      `${BASE_URL}/api/get-all-blogs`,
+      getOne:      `${BASE_URL}/api/get-single-blog`,
+      categories:  `${BASE_URL}/api/get-blog-categories`,
+      like:        `${BASE_URL}/api/submit-blog-like`,
     },
     comments: {
-      getByBlog: `${BASE_URL}/api/get-blog-comments`,
-      create: `${BASE_URL}/api/post-blog-comment`,
+      create:     `${BASE_URL}/api/post-blog-comment`,
+      getByBlog:  `${BASE_URL}/api/get-all-comments-by-blog`,
     },
   },
 

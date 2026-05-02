@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getAllBlogs, type Blog } from "@/lib/services/blog";
+import { getFeaturedBlogs, getBlogCategories, type Blog, type BlogCategory } from "@/lib/services/blog";
 import { API_CONFIG } from "@/config/api";
 
 const DUMMY_IMG =
@@ -31,13 +31,22 @@ function formatReadTime(minutes: number | null): string {
 function resolveThumbnail(path: string | null): string {
   if (!path) return DUMMY_IMG;
   if (path.startsWith("http")) return path;
-  return `${API_CONFIG.baseUrl}/storage/${path}`;
+  return `${API_CONFIG.baseUrl}/${path}`;
 }
 
-function resolveLink(blog: Blog): { href: string; external: boolean } {
-  if (blog.url && blog.url.startsWith("http")) return { href: blog.url, external: true };
-  if (blog.slug) return { href: `/blogs/${blog.slug}`, external: false };
-  return { href: "#", external: false };
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function truncateText(text: string, max: number): string {
+  if (!text) return "";
+  const clean = stripHtml(text);
+  return clean.length > max ? clean.slice(0, max).trimEnd() + "…" : clean;
+}
+
+function resolveLink(blog: Blog): string {
+  if (blog.slug) return `/blogs/${blog.slug}`;
+  return "#";
 }
 
 export const Blogs = () => {
@@ -45,15 +54,43 @@ export const Blogs = () => {
   const [visibleCount] = useState(INITIAL_VISIBLE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
+  const [likingId, setLikingId] = useState<number | null>(null);
+  const [categoryMap, setCategoryMap] = useState<Map<number, string>>(new Map());
 
   useEffect(() => {
-    getAllBlogs()
-      .then((data) => {
+    getFeaturedBlogs()
+      .then((data: Blog[]) => {
         setBlogs(data);
+        const stored = JSON.parse(localStorage.getItem("liked_blogs") || "[]") as number[];
+        setLikedIds(new Set(stored));
       })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
+
+    getBlogCategories()
+      .then((cats: BlogCategory[]) => setCategoryMap(new Map(cats.map((c) => [c.id, c.title]))))
+      .catch(() => {});
   }, []);
+
+  async function handleLike(e: React.MouseEvent, blogId: number) {
+    e.preventDefault();
+    if (likingId !== null || likedIds.has(blogId)) return;
+    setLikingId(blogId);
+    try {
+      const res = await fetch(`${API_CONFIG.baseUrl}/api/submit-blog-like/${blogId}`, {
+        method: "POST",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+      });
+      if (res.status === 201 || res.status === 429) {
+        setLikedIds((prev) => new Set([...prev, blogId]));
+        const stored = JSON.parse(localStorage.getItem("liked_blogs") || "[]") as number[];
+        localStorage.setItem("liked_blogs", JSON.stringify([...new Set([...stored, blogId])]));
+      }
+    } catch { /* silent */ } finally {
+      setLikingId(null);
+    }
+  }
 
 
   return (
@@ -251,10 +288,10 @@ export const Blogs = () => {
                               }}
                             />
                           </div>
-                          {blog.blog_type && (
+                          {categoryMap.get(blog.blog_category_id) && (
                             <div>
                               <span className="inline-block px-3 py-1 bg-cyan-950/40 border border-cyan-500/30 text-cyan-200 text-[10px] uppercase tracking-wider font-mono transform -skew-x-12 group-hover:bg-orange-500/20 group-hover:border-orange-500/50 group-hover:text-orange-300 transition-all">
-                                [{blog.blog_type.substring(0, 20)}]
+                                [{categoryMap.get(blog.blog_category_id)!.substring(0, 20)}]
                               </span>
                             </div>
                           )}
@@ -271,12 +308,11 @@ export const Blogs = () => {
                           {blog.title}
                         </h3>
                         <p className="text-slate-400 text-xs sm:text-sm font-mono leading-relaxed max-w-[800px] border-l-2 border-cyan-500/30 group-hover:border-orange-500/50 pl-4 mb-6 transition-colors">
-                          {blog.description}
+                          {truncateText(blog.description || blog.content || "", 180)}
                         </p>
 
-                        <div className="flex justify-start">
-                          {(() => { const { href, external } = resolveLink(blog); return (
-                          <Link href={href} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
+                        <div className="flex items-center gap-3">
+                          <Link href={resolveLink(blog)}>
                             <button className="px-5 py-2 bg-transparent border border-cyan-500/40 text-cyan-300 font-mono text-xs uppercase tracking-widest hover:bg-cyan-500/10 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all flex items-center gap-2 group/btn relative overflow-hidden">
                               <div className="absolute inset-0 w-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent group-hover/btn:w-full transition-all duration-700 z-0" />
                               <span className="relative z-10 flex items-center gap-2 font-bold">
@@ -293,7 +329,20 @@ export const Blogs = () => {
                               </svg>
                             </button>
                           </Link>
-                          ); })()}
+                          <button
+                            onClick={(e) => handleLike(e, blog.id)}
+                            disabled={likingId !== null || likedIds.has(blog.id)}
+                            className={`flex items-center gap-1.5 px-3 py-2 border font-mono text-[10px] uppercase tracking-widest transition-all disabled:cursor-not-allowed ${
+                              likedIds.has(blog.id)
+                                ? "bg-rose-500/20 border-rose-500/60 text-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.2)]"
+                                : "bg-slate-900/40 border-slate-700/50 text-slate-500 hover:border-rose-500/40 hover:text-rose-400"
+                            }`}
+                          >
+                            <svg className="w-3.5 h-3.5" fill={likedIds.has(blog.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                            {likingId === blog.id ? "..." : likedIds.has(blog.id) ? "LIKED" : "LIKE"}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -322,7 +371,7 @@ export const Blogs = () => {
                     <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
-                    <span className="text-slate-500 ml-1 text-[10px]">[ {blogs.length}_ENTRIES ]</span>
+                   
                   </div>
                 </motion.div>
               </Link>
