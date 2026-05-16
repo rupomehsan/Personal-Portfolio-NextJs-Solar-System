@@ -50,7 +50,7 @@ interface RawPaginated {
   current_page: number;
   last_page: number;
   total: number;
-  per_page: number;
+  limit: number;
   from: number;
   to: number;
   data: Blog[];
@@ -88,6 +88,7 @@ export function resolveStorageUrl(path: string | null): string {
 export async function getPagedBlogs(page: number): Promise<PaginatedBlogs> {
   const url = new URL(API_CONFIG.endpoints.blogs.getAll);
   url.searchParams.set("status", "active");
+  url.searchParams.set("limit", "12");
   url.searchParams.set("page", String(page));
 
   const res = await fetch(url.toString(), { ...API_CONFIG.defaultOptions });
@@ -100,7 +101,7 @@ export async function getPagedBlogs(page: number): Promise<PaginatedBlogs> {
     currentPage: d.current_page ?? page,
     lastPage:    d.last_page    ?? 1,
     total:       d.total        ?? 0,
-    perPage:     d.per_page     ?? 10,
+    perPage:     d.limit     ?? 12,
     from:        d.from         ?? 0,
     to:          d.to           ?? 0,
   };
@@ -130,8 +131,7 @@ export async function getFeaturedBlogs(): Promise<Blog[]> {
 
   const url = new URL(API_CONFIG.endpoints.blogs.getAll);
   url.searchParams.set("status", "active");
-  url.searchParams.set("is_featured", "1");
-  url.searchParams.set("page", "1");
+  url.searchParams.set("show_top", "yes");
 
   const res = await fetch(url.toString(), { ...API_CONFIG.defaultOptions });
   if (!res.ok) throw new Error(`Failed to fetch featured blogs — HTTP ${res.status}`);

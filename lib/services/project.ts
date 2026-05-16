@@ -45,7 +45,7 @@ interface RawPaginated {
   current_page: number;
   last_page: number;
   total: number;
-  per_page: number;
+  limit: number;
   from: number;
   to: number;
   data: Project[];
@@ -65,7 +65,7 @@ export async function getPagedProjects(
   page: number,
   extraParams: Record<string, string> = {}
 ): Promise<PaginatedProjects> {
-  const qs = new URLSearchParams({ status: "active", ...extraParams, page: String(page) });
+  const qs = new URLSearchParams({ status: "active", limit: "12", ...extraParams, page: String(page) });
   const res = await fetch(
     `${API_CONFIG.endpoints.projects.getAll}?${qs}`,
     { ...API_CONFIG.defaultOptions }
@@ -79,7 +79,7 @@ export async function getPagedProjects(
     currentPage: d.current_page ?? page,
     lastPage:    d.last_page    ?? 1,
     total:       d.total        ?? 0,
-    perPage:     d.per_page     ?? 10,
+    perPage:     d.limit     ?? 12,
     from:        d.from         ?? 0,
     to:          d.to           ?? 0,
   };

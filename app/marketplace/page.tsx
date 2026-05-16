@@ -403,7 +403,7 @@ export default function AllMarketplacesPage() {
                     <div className="grid grid-cols-2 gap-2.5">
                       {[
                         { l: "TOTAL",      v: result.total },
-                        { l: "PER_PAGE",   v: result.perPage },
+                        { l: "limit",   v: result.perPage },
                         { l: "PAGES",      v: result.lastPage },
                         { l: "CATEGORIES", v: sidebarReady ? categories.length : "—" },
                         { l: "CURR_PAGE",  v: result.currentPage },

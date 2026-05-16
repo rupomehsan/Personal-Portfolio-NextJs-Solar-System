@@ -48,7 +48,7 @@ interface RawPaginated {
   current_page: number;
   last_page: number;
   total: number;
-  per_page: number;
+  limit: number;
   from: number;
   to: number;
   data: Marketplace[];
@@ -68,7 +68,7 @@ export async function getPagedMarketplaces(
   page: number,
   extraParams: Record<string, string> = {}
 ): Promise<PaginatedMarketplaces> {
-  const qs = new URLSearchParams({ status: "active", ...extraParams, page: String(page) });
+  const qs = new URLSearchParams({ status: "active", limit: "12", ...extraParams, page: String(page) });
   const res = await fetch(
     `${API_CONFIG.endpoints.marketplaces.getAll}?${qs}`,
     { ...API_CONFIG.defaultOptions }
@@ -82,7 +82,7 @@ export async function getPagedMarketplaces(
     currentPage: d.current_page ?? page,
     lastPage:    d.last_page    ?? 1,
     total:       d.total        ?? 0,
-    perPage:     d.per_page     ?? 10,
+    perPage:     d.limit     ?? 12,
     from:        d.from         ?? 0,
     to:          d.to           ?? 0,
   };

@@ -52,13 +52,42 @@ function parseTags(raw: string | null): string[] {
   return raw.split(",").map((t) => t.trim()).filter(Boolean);
 }
 
-function toHTML(content: string): string {
-  if (/<[a-z][\s\S]*>/i.test(content)) return content;
-  return content
-    .split(/\n{2,}/)
-    .filter(Boolean)
-    .map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
-    .join("");
+function toHTML(raw: string): string {
+  // Already HTML — pass through as-is
+  if (/<[a-z][\s\S]*>/i.test(raw)) return raw;
+
+  let html = "";
+  // Split on code fences first
+  const parts = raw.split(/(```[\s\S]*?```)/g);
+  for (const part of parts) {
+    const fenceMatch = part.match(/^```(\w*)\n?([\s\S]*?)```$/);
+    if (fenceMatch) {
+      const code = fenceMatch[2]
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      html += `<pre><code>${code}</code></pre>`;
+    } else {
+      // Plain-text section: turn blank lines into paragraph breaks
+      const paragraphs = part
+        .split(/\n{2,}/)
+        .filter((p) => p.trim());
+      for (const p of paragraphs) {
+        // Full-line dividers like ====== → <hr>
+        if (/^[=\-]{4,}\s*$/.test(p.trim())) {
+          html += "<hr>";
+        } else {
+          const escaped = p
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\n/g, "<br>");
+          html += `<p>${escaped}</p>`;
+        }
+      }
+    }
+  }
+  return html;
 }
 
 /* ─── comment avatar ─────────────────────────────────────────────────────── */
@@ -412,7 +441,7 @@ export default function BlogDetailPage() {
 
   /* ── Blog detail ── */
   return (
-    <main className="min-h-screen bg-[#030014] relative overflow-x-hidden">
+    <main className="min-h-screen bg-[#030014] relative">
 
       {/* Lightbox */}
       {lightboxIdx !== null && (
@@ -460,7 +489,7 @@ export default function BlogDetailPage() {
       <div className="fixed bottom-0 right-1/4 w-[600px] h-[500px] bg-orange-500/[0.025] rounded-full blur-[180px] pointer-events-none" />
 
       {/* ── Hero thumbnail ── */}
-      <div className="relative w-full h-[38vh] sm:h-[48vh] overflow-hidden">
+      <div className="relative w-full h-[38vh] sm:h-[48vh] overflow-hidden overflow-x-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-[#030014] z-10" />
         <div className="absolute inset-0 bg-cyan-900/15 mix-blend-color z-[5]" />
         <img src={thumb(blog.thumbnail_image)} alt={blog.title}
@@ -531,49 +560,53 @@ export default function BlogDetailPage() {
               </div>
             </motion.div>
 
-            {/* Description + vertical image strip */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.15 }}
-              className="flex gap-0 mb-10"
-            >
-              {/* Left: vertical image strip */}
-              {gallery.length > 0 && (
-                <div className="flex flex-col gap-2 w-[80px] sm:w-[96px] shrink-0 pr-4 border-r border-cyan-500/25 mr-5">
-                  <span className="font-mono text-[8px] text-slate-700 uppercase tracking-widest mb-1">
-                    {gallery.length} IMG
-                  </span>
-                  {gallery.map((src, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setLightboxIdx(i)}
-                      className="w-full aspect-video overflow-hidden border border-cyan-500/20 hover:border-cyan-400/60 transition-colors group relative"
-                    >
-                      <img
-                        src={src}
-                        alt={`Screenshot ${i + 1}`}
-                        className="w-full h-full object-cover opacity-75 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
-                        onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {/* Right: description */}
-              {blog.description && (
-                <p className="flex-1 font-mono text-slate-300 text-sm sm:text-[15px] leading-relaxed italic">
-                  {stripHtml(blog.description)}
-                </p>
-              )}
-            </motion.div>
+            {/* Vertical image strip */}
+            {gallery.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.15 }}
+                className="flex flex-col gap-2 w-[80px] sm:w-[96px] shrink-0 pr-4 border-r border-cyan-500/25 mr-5 mb-10"
+              >
+                <span className="font-mono text-[8px] text-slate-700 uppercase tracking-widest mb-1">
+                  {gallery.length} IMG
+                </span>
+                {gallery.map((src, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setLightboxIdx(i)}
+                    className="w-full aspect-video overflow-hidden border border-cyan-500/20 hover:border-cyan-400/60 transition-colors group relative"
+                  >
+                    <img
+                      src={src}
+                      alt={`Screenshot ${i + 1}`}
+                      className="w-full h-full object-cover opacity-75 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
+                      onError={(e) => { (e.target as HTMLImageElement).src = DUMMY_IMG; }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                  </button>
+                ))}
+              </motion.div>
+            )}
 
-           
+            {/* Main content */}
+            {blog.content && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mb-10"
+              >
+                <div
+                  className="blog-content font-mono text-slate-300 text-sm leading-relaxed max-h-[70vh] overflow-y-auto pr-3 [scrollbar-width:thin] [scrollbar-color:rgba(6,182,212,0.3)_transparent] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-cyan-500/30 [&::-webkit-scrollbar-thumb]:rounded-full"
+                  dangerouslySetInnerHTML={{ __html: toHTML(blog.content) }}
+                />
+              </motion.div>
+            )}
 
             {/* Tags */}
             {tags.length > 0 && (
@@ -731,6 +764,8 @@ export default function BlogDetailPage() {
           </aside>
         </div>
       </div>
+
+      <div className="pb-20" />
 
       {/* Blog prose styles */}
       <style>{`

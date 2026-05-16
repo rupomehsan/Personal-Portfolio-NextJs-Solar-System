@@ -438,7 +438,7 @@ function BlogsContent() {
                     <div className="grid grid-cols-2 gap-2.5">
                       {[
                         { l: "TOTAL",      v: activeCategoryId ? (categoryResults?.length ?? "…") : result.total },
-                        { l: "PER_PAGE",   v: activeCategoryId ? "—" : result.perPage },
+                        { l: "limit",   v: activeCategoryId ? "—" : result.perPage },
                         { l: "PAGES",      v: activeCategoryId ? "—" : result.lastPage },
                         { l: "CATEGORIES", v: categories.length > 0 ? categories.length : "—" },
                       ].map((s) => (
